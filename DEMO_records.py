@@ -5,26 +5,30 @@ Created on Sat Sep  1 22:08:10 2018
 @author: Marios D. Pazidis
 """
 
-%reset -f
+#%reset -f
 ## User Input
 # Selection parameters
-import os
-import sys
+#import os
+#import sys
 from math import log as log
-import numpy as np
-import scipy
-import scipy.io
-import itertools
+#import numpy as np
+#import scipy
+#import scipy.io
+#import itertools
 import Database_functions
-import matplotlib
-import matplotlib.pyplot as plt
-os.chdir("C:\Marios\Research\Tests\GM_selection_DEMO\Python\GMsel_DE")
+#import matplotlib
+#import matplotlib.pyplot as plt
+import Split_functions
+import folder_fmt_functions
+import DE_functions
 Inf=1.8e308
 '''
-###########User Input##########
+#################################   User Input    #################################
 '''
 # selectionParams
 selectionParams={}
+SaveFolder='C:\Marios\Research\Tests\GM_selection_DEMO\Python\GMsel_DE\TEST'
+folders=folder_fmt_functions.folder_init(SaveFolder)
 
 databaseFile='ESD_Rexel_meta_data.mat'
 #databaseFile='Resorce2013_meta_data.mat'
@@ -48,6 +52,26 @@ max_diff_max=2
 max_diff_min=0.25
 nSeed=2
 
+# allowedRecs
+Vs30=[1000,  Inf]
+Mag=[5, Inf]
+D=[10, Inf]
+
+# DE parameters
+MaxGen=100
+nPop=50
+F_l=0.2
+F_u=1
+tau_1=0.1
+tau_2=0.1
+CR_l=0.05
+CR_u=1
+F_in=0.5
+CR_in=0.8
+
+# Split data in batches for efficient RAM usage
+split_bool=1    # 1 for split / 0 for no split
+split_size=1000
 
 key=['databaseFile','nGM', 'comp_num', 'comp_idx', 'Tmin', 'Tmax', 'minScale', 'maxScale', 'a_g', 'zeta', 'soiltype', 'minScaleRec','maxScaleRec', 'std_w', 'sameEvent','max_diff_max','max_diff_min','nSeed']
 value=[databaseFile,nGM, comp_num, comp_idx, Tmin, Tmax, minScale, maxScale, a_g, zeta, soiltype, minScaleRec, maxScaleRec,std_w,sameEvent,max_diff_max,max_diff_min,nSeed]
@@ -58,11 +82,6 @@ selectionParams=dict(temp)
 for x in key:
     exec("del(%s)" % (x))
 
-# allowedRecs
-Vs30=[1000,  Inf]
-Mag=[5, Inf]
-D=[10, Inf]
-
 key=['Vs30', 'Mag', 'D']
 value=[Vs30, Mag, D]
 temp=list(zip(key, value))
@@ -72,28 +91,28 @@ allowedRecs=dict(temp)
 for x in key:
     exec("del(%s)" % (x))
 
-# DE parameters
-MaxIt=100
-nPop=50
-beta_min=0.6
-beta_max=0.6
-pCR=0.8
-VarSize=[1, selectionParams['nGM']]
-VarMin=log(selectionParams['minScale'])
-VarMax=log(selectionParams['maxScale'])
-
-key=['MaxIt', 'nPop', 'beta_min', 'beta_max', 'pCR', 'VarSize', 'VarMin', 'VarMax']
-value=[MaxIt, nPop, beta_min, beta_max, pCR, VarSize, VarMin, VarMax]
+key=['MaxGen', 'nPop','F_l','F_u','tau_1','tau_2','CR_l','CR_u','F_in','CR_in']
+value=[MaxGen, nPop,F_l, F_u,tau_1,tau_2,CR_l,CR_u,F_in,CR_in]
 temp=list(zip(key, value))
 DE_par=dict(temp)
 
 # delete variables
 for x in key:
     exec("del(%s)" % (x))
-del key
-del value
-del temp
-del x
+
+key=['split_bool', 'split_size']
+value=[split_bool, split_size]
+temp=list(zip(key, value))
+split_data=dict(temp)
+
+# delete variables
+for x in key:
+    exec("del(%s)" % (x))
+del key,value,temp,x
+
+'''
+#################################   Database screening / Combinations    #################################
+'''
 
 ## screen database & define target spectrum
 Ndatabase, Rec_db_metadata, Sa, Periods=Database_functions.screen_database(selectionParams,allowedRecs)
@@ -105,27 +124,21 @@ Sa_Tgt=Sa_Tgt[:,Periods['idx_T_match'][0]]
 Sa=Sa[:,Periods['idx_T_match'][0]]
 
 ## Calculate max/min scaling factors and further screen the database
-Sa,Rec_db_metadata,sf_ind, Max_sf_ind, Min_sf_ind, Ndatabase=Database_functions.Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams)
+Sa,Rec_db_metadata,sf_ind, selectionParams, Ndatabase=Database_functions.Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams)
 
 ## Calculate combinations / Create GM suites
-Combs, NSeed=Database_functions.Combinations(selectionParams,Rec_db_metadata)
+Combs, Sa_unsc_ave, NSeed, split_data=Database_functions.Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data)
 
+## Printing formats
+formats=folder_fmt_functions.fmt(SaveFolder,split_data,NSeed,Rec_db_metadata,DE_par)
 
+## Save data to files
+Split_functions.Pre_run_split(split_data,NSeed,Combs,Sa_unsc_ave,folders,formats)
+del Combs, Sa_unsc_ave
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+'''
+#################################   DE    #################################
+'''
+## Initialize populations
+DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt)
 

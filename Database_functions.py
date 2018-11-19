@@ -12,6 +12,23 @@ import itertools
 import math
 import sys
 from Cost_functions import Obj_RMSE as Obj_RMSE
+from tqdm import tqdm
+
+
+"""
+DEFINITIONS
+"""
+
+
+def dictionary_fn(key):
+    value=[]
+    for x in key:
+        print(eval(x))
+        #value.append(eval(x))
+    temp=list(zip(key, value))
+    z=dict(temp)
+    return z
+
 
 def screen_database(selectionParams,allowedRecs):
 
@@ -90,9 +107,11 @@ def screen_database(selectionParams,allowedRecs):
     
     Ndatabase=len(Fin_screen)
     Rec_db_metadata['idx']=np.array(range(0,Ndatabase))
-
+    
+    print('\n')
     print('1st screening: Number of allowed GMs: ' + str(Ndatabase))
     print('1st screening: Number of unique events = '+ str(len(np.unique(Rec_db_metadata['EQID']))))
+    print('\n')
     if (len(np.unique(Rec_db_metadata['EQID']))<selectionParams['nGM']) & (selectionParams['sameEvent']==1):
         sys.exit('Not enough Ground Motions - Required : '+str(selectionParams['nGM'])+' - Available : '+str(len(np.unique(Rec_db_metadata['EQID']))))
 
@@ -149,7 +168,6 @@ def EC8_Elastic_Spectrum_Type_1(soiltype_EC8,a_g_EC8,zeta_EC8,periods_EC8):
 
 
 def Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams):
-    
     ## Individual scaling factor to match target spectrum
     sf_ind=np.sum((Sa_Tgt-Sa)/len(Sa),1)
     
@@ -164,24 +182,28 @@ def Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams):
     
     Max_sf_ind=np.delete(Max_sf_ind,del_idx,axis=0)
     Min_sf_ind=np.delete(Min_sf_ind,del_idx,axis=0)
+    selectionParams['Max_sf_ind']=np.log(Max_sf_ind)
+    selectionParams['Min_sf_ind']=np.log(Min_sf_ind)
     
     sf_ind=np.delete(sf_ind,del_idx,axis=0)
     Sa=np.delete(Sa,del_idx,axis=0)
-
+    
     for x in Rec_db_metadata:
         Rec_db_metadata[x]=np.delete(Rec_db_metadata[x],del_idx,axis=0)
     
     Ndatabase=len(Sa)
     Rec_db_metadata['idx']=np.array(range(0,Ndatabase))
-
+    
     print('2nd screening: Number of allowed GMs: ' + str(Ndatabase))
     print('2nd screening: Number of unique events = '+ str(len(np.unique(Rec_db_metadata['EQID']))))
+    print('\n')
     if (len(np.unique(Rec_db_metadata['EQID']))<selectionParams['nGM']) & (selectionParams['sameEvent']==1):
         sys.exit('Not enough Ground Motions - Required : '+str(selectionParams['nGM'])+' - Available : '+str(len(np.unique(Rec_db_metadata['EQID']))))
     
-    return  Sa,Rec_db_metadata,sf_ind, Max_sf_ind, Min_sf_ind, Ndatabase
+    return  Sa,Rec_db_metadata,sf_ind, selectionParams, Ndatabase
 
-def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa):
+def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data):
+
     # Calculate combinations
     Combs=np.array(list(itertools.combinations(Rec_db_metadata['idx'], selectionParams['nSeed'])))
     
@@ -192,53 +214,31 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa):
     
     # Incrementaly add records - Create trial sets
     rem=selectionParams['nGM']-selectionParams['nSeed']
-    Sample_sel_idx=np.empty([NSeed,rem])
-    for ii in range(NSeed):
+    Sample_sel_idx=-1*np.ones([NSeed,rem])
+    #for ii in range(NSeed):
+    for ii in tqdm(range(NSeed),miniters =int(NSeed*0.05),desc='Combinations'):
         for jj in range(rem):
-            Sample_RMSE=np.ones(Ndatabase)*Inf
+            Sample_RMSE=np.ones(Ndatabase)*np.inf
             for kk in range(Ndatabase):
-                Sample_suite=np.append(Combs[ii],kk)
+                Sample_add=np.append(kk,Sample_sel_idx[ii][np.where(Sample_sel_idx[ii]!=-1)])   # ignore -1 values from initialization
+                Sample_suite=np.append(Combs[ii],Sample_add).astype(int)
                 Case=len(np.unique(Rec_db_metadata['EQID'][Sample_suite]))<=len(Sample_suite)-selectionParams['sameEvent']
                 if not Case:
                     Sample_Sa=Sa[Sample_suite]
-                    Sample_Sa_ave=np.mat(np.transpose(np.mean(Sample_Sa,0)))
+                    Sample_Sa_ave=np.mat(np.transpose(np.mean(Sample_Sa,axis=0)))
                     Sample_sf=np.sum(Sa_Tgt-Sample_Sa_ave)/np.size(Sample_Sa_ave,1)
                     Sample_RMSE[kk]=Obj_RMSE(Sample_Sa_ave,Sa_Tgt,Sample_sf)
             Sample_sel_idx[ii,jj]=Sample_RMSE.argmin(0)
-    
+            
     Combs=np.concatenate((Combs,Sample_sel_idx),axis=1)
+    Sa_combs=Sa[Combs.astype(int)]
+    Sa_unsc_ave=np.mean(Sa_combs,axis=1)
+    if not split_data['split_bool']:
+        split_data['split_size']=NSeed
+    split_data['split_num']=NSeed//(split_data['split_size']+1)
+    print('\n')
     
-    
-    
-    
-    
-    
-
-
-    
-
-    
-    print('Final number of combinations: ' + str(NSeed))
-    
-    return Combs, NSeed
-
-
-    [~,min_ind]=min(RMSE_check);
-    GM_Trials.GM_sel_idx(ii,sel_ind)=min_ind;
-    GM_Trials.GM_sel_RMSE(ii,sel_ind)=min(RMSE_check);
-
-np.empty(1)
-
-
-
-
-
-
-
-
-
-
-
+    return Combs, Sa_unsc_ave, NSeed,split_data
 
 
 
