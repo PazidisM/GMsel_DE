@@ -5,49 +5,62 @@ Created on Mon Nov 19 15:42:32 2018
 @author: Marios
 """
 import random
+import math
+import numpy as np
+import tqdm
+import time
+from Cost_functions import Obj_RMSE as Obj_RMSE
+from Cost_functions import Obj_std as Obj_std
 
-def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt):
+def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
     
     split_size=split_data['split_size']
-    
     minSF=math.log(selectionParams['minScale'])
     maxSF=math.log(selectionParams['maxScale'])
     Max_sf_ind=selectionParams['Max_sf_ind']
     Min_sf_ind=selectionParams['Min_sf_ind']
     nGM=selectionParams['nGM']
     nPop=DE_par['nPop']
-    F_in=DE_par['F_in']
-    CR_in=DE_par['CR_in']
+    F_l=DE_par['F_l']
+    F_u=DE_par['F_u']
+    CR_l=DE_par['CR_l']
+    CR_u=DE_par['CR_u']
+    tau_1=DE_par['tau_1']
+    tau_2=DE_par['tau_2']
+    
+    
     
     index=0
     index_spl=0
     while index<NSeed:
+        
+        print('\n')
+        print('Optimizing Batch '+str(index_spl)+' of '+str(split_data['split_num']))
+        
         split_start=index%split_size+index//split_size*split_size
         split_end=split_start+split_size
         if split_end>NSeed:
             split_end=NSeed
         
-        print('\n')
-        print('Optimizing Batch '+str(index_spl)+' of '+str(split_data['split_num']))
-        
+        P={}
         fileName=folders['Combinations']+'\Combs_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         Combs_split=np.loadtxt(fileName).astype(int)
         fileName=folders['Sa_unsc_ave']+'\Sa_unsc_ave_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         Sa_unsc_ave_split=np.loadtxt(fileName)
-        
         fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        Par_F=np.loadtxt(fileName)
+        P['Par_F']=np.loadtxt(fileName)
         fileName=folders['Par_CR']+'\Par_CR_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        Par_CR=np.loadtxt(fileName)
+        P['Par_CR']=np.loadtxt(fileName)
         fileName=folders['Cost_Obj_01']+'\Cost_Obj_01_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        Cost_Obj_01=np.loadtxt(fileName)
+        P['Cost_Obj_01']=np.loadtxt(fileName)
         fileName=folders['Cost_Obj_02']+'\Cost_Obj_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        Cost_Obj_02=np.loadtxt(fileName)
+        P['Cost_Obj_02']=np.loadtxt(fileName)
         
-        for ii in tqdm(range(len(Combs_split)),miniters =int(len(Combs_split)*0.05),desc='% of batch'):
-            fileName=folders['Scaling_factors']+'\SF_'+str(index+ii).zfill(formats['fill_fn_all'])+'.out'
-            sf=np.loadtxt(fileName)
-            Sample_sf=np.mean(sf,axis=0)
+        for cmb in tqdm(range(len(Combs_split)),miniters =int(len(Combs_split)*0.05),desc='% of batch'):
+            fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+            P['sf']=np.loadtxt(fileName)
+            Sa_unsc_ave_suite=Sa_unsc_ave_split[cmb,:]
+            Sa_suite=Sa[Combs_split[cmb],:]
             
             for gen in reang(MaxGen):
                 
@@ -58,23 +71,108 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt):
                 Q['Par_F']=np.full((1, nPop),np.inf)
                 Q['Par_CR']=np.full((1, nPop),np.inf)
                 
-                for pm in range(nPop):
+                for x in range(nPop):
                     rand_1=random.uniform(0,1)
                     rand_2=random.uniform(0,1)
                     rand_3=random.uniform(0,1)
                     rand_4=random.uniform(0,1)
                     
-                    [random.sample([i for i in range(0,nPop) if i != pm],3)]
+                    ## Mutation (DE/rand/1 for now) ##
+                    Xr=random.sample([i for i in range(0,nPop) if i != x],3)
+                    if rand_2<tau_1:
+                        u_F=F_l+rand_1*F_u
+                    else:
+                        u_F=P['Par_F'][cmb,x]
                     
+                    u=P['sf'][:,Xr[0]]+u_F*(P['sf'][:,Xr[1]]-P['sf'][:,Xr[2]])   #DE/rand/1
+                    # enforce constraints in individual values
+                    case=u>Max_sf_ind[Combs_split[cmb]]
+                    u[case]=Max_sf_ind[Combs_split[cmb,np.where(case)][0]]
+                    case=u<Min_sf_ind[Combs_split[cmb]]
+                    u[case]=Min_sf_ind[Combs_split[cmb,np.where(case)][0]]
                     
+                    ## Crossover ##
+                    if rand_4<tau_2:
+                        u_CR=rand_3
+                    else:
+                        u_CR=P['Par_CR'][cmb,x]
                     
+                    case_01=random.choice(u)==u
+                    case_02=[random.random() for i in range(nGM)]<=Par_CR[cmb,x]
+                    case=~np.array(case_01|case_02) #condition where trial j is parent j
+                    u[case]=P['sf'][case,x]
+                    u.shape=(nGM,1)
+                    u_mean=np.mean(u)
                     
+                    # DEMO
+                    u_c_01=Obj_RMSE(Sa_unsc_ave_suite,Sa_Tgt,u_mean)
+                    u_c_02=Obj_std(Sa_suite,u,Sa_unsc_ave_suite,u_mean)
                     
+                    case_01=((u_c_01<P['Cost_Obj_01'][cmb,x])&(u_c_02<=P['Cost_Obj_02'][cmb,x]))|((u_c_01<=P['Cost_Obj_01'][cmb,x])&(u_c_02<P['Cost_Obj_02'][cmb,x]))    # offspring dominates parent
+                    case_02=((u_c_01>P['Cost_Obj_01'][cmb,x])&(u_c_02>=P['Cost_Obj_02'][cmb,x]))|((u_c_01>=P['Cost_Obj_01'][cmb,x])&(u_c_02>P['Cost_Obj_02'][cmb,x]))    # parent dominates child
+                    case_03=not case_01|case_02    # parent and offspring nondominated
                     
+                    if case_01:
+                        P['sf'][:,x]=u[:,0]     # DEMO
+                        P['Cost_Obj_01'][cmb,x]=u_c_01
+                        P['Cost_Obj_02'][cmb,x]=u_c_02
+                        P['Par_F'][cmb,x]=u_F
+                        P['Par_CR'][cmb,x]=u_CR
+                    elif case_03:
+                        Q['sf'][:,x]=u[:,0]
+                        Q['Cost_Obj_01'][0,x]=u_c_01
+                        Q['Cost_Obj_02'][0,x]=u_c_02
+                        Q['Par_F'][0,x]=u_F
+                        Q['Par_CR'][0,x]=u_CR
                     
-                    
-                    
-                    
+                # combine parent and offspring populations
+                R={}
+                case=Q['Cost_Obj_01']!=np.inf
+                for key in [ v for v in Q if v != 'sf' ]:
+                    R[key]=np.concatenate((P[key][cmb,:],Q[key][case]),axis=0)
+                
+                
+                
+                
+start=time.time()
+summm=0
+for kkk in range(50):
+    for klk in range(10000):
+        Xr=random.sample([i for i in range(0,nPop) if i != pm],3)
+        if rand_2<tau_1:
+            Par_F[cmb,pm]=F_l+rand_1*F_u
+            
+        u=sf[:,Xr[0]]+Par_F[cmb,pm]*(sf[:,Xr[1]]-sf[:,Xr[2]])   #DE/rand/1
+        # enforce constraints in individual values
+        case=u>Max_sf_ind[Combs_split[cmb]]
+        u[case]=Max_sf_ind[Combs_split[cmb,[i for i in np.where(case)]]][0]
+end=time.time()
+dur_1=end-start
+print(dur_1)
+
+
+start=time.time()
+summm=0
+for kkk in range(50):
+    for klk in range(10000):
+        Xr=random.sample([i for i in range(0,nPop) if i != pm],3)
+        if rand_2<tau_1:
+            Par_F[cmb,pm]=F_l+rand_1*F_u
+            
+        u=sf[:,Xr[0]]+Par_F[cmb,pm]*(sf[:,Xr[1]]-sf[:,Xr[2]])   #DE/rand/1
+        # enforce constraints in individual values
+        case=u>Max_sf_ind[Combs_split[cmb]]
+        u[case]=Max_sf_ind[Combs_split[cmb,np.where(case)][0]]
+end=time.time()
+dur_2=end-start
+print(dur_2)
+print(dur_1/dur_2)
+
+
+
+
+
+
 
 
 
@@ -138,7 +236,7 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt):
     
     
     
-    
+     
     
     
     

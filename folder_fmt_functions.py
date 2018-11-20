@@ -27,6 +27,7 @@ def folder_init(mainFolder):
     return folders
 
 
+
 def fmt(mainFolder,split_data,NSeed,Rec_db_metadata,DE_par):
     nPop=DE_par['nPop']
     split_size=split_data['split_size']

@@ -19,7 +19,6 @@ from tqdm import tqdm
 DEFINITIONS
 """
 
-
 def dictionary_fn(key):
     value=[]
     for x in key:
@@ -216,7 +215,7 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data)
     rem=selectionParams['nGM']-selectionParams['nSeed']
     Sample_sel_idx=-1*np.ones([NSeed,rem])
     #for ii in range(NSeed):
-    for ii in tqdm(range(NSeed),miniters =int(NSeed*0.05),desc='Combinations'):
+    for ii in tqdm(range(NSeed),miniters =round(NSeed*0.05),desc='Combinations'):
         for jj in range(rem):
             Sample_RMSE=np.ones(Ndatabase)*np.inf
             for kk in range(Ndatabase):

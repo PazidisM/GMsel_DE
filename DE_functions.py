@@ -4,12 +4,14 @@ Created on Fri Nov 16 18:53:38 2018
 
 @author: Marios D. Pazidis
 """
+
 import math
 import numpy as np
 from Cost_functions import Obj_RMSE as Obj_RMSE
+from Cost_functions import Obj_std as Obj_std
 from tqdm import tqdm
 
-def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt):
+def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
     
     split_size=split_data['split_size']
     
@@ -42,28 +44,30 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
         Cost_Obj_01=np.empty([len(Combs_split),nPop])
         Cost_Obj_02=np.empty([len(Combs_split),nPop])
         
-        #for ii in range(len(Combs_split)):
-        for ii in tqdm(range(len(Combs_split)),miniters =int(len(Combs_split)*0.05),desc='% of batch'):
+        #for cmb in range(len(Combs_split)):
+        for cmb in tqdm(range(len(Combs_split)),miniters =round(len(Combs_split)*0.05),desc='% of batch'):
             sf=np.random.uniform(minSF,maxSF,(nGM, nPop))
-            Sample_sf=np.mean(sf,axis=0)
+            Sa_suite=Sa[Combs_split[cmb],:]
+            Sa_unsc_ave_suite=Sa_unsc_ave_split[cmb,:]
             
             # Enforce sf limits
-            Max_sf=Max_sf_ind[Combs_split[ii]]
-            Min_sf=Min_sf_ind[Combs_split[ii]]
+            Max_sf=Max_sf_ind[Combs_split[cmb]]
+            Min_sf=Min_sf_ind[Combs_split[cmb]]
             Max_sf.shape=(nGM,1)
             Min_sf.shape=(nGM,1)
             Max_sf=np.matlib.repmat(Max_sf,1,nPop)
             Min_sf=np.matlib.repmat(Min_sf,1,nPop)
-            Max_sf_idx=np.where(sf>Max_sf)
-            Min_sf_idx=np.where(sf<Min_sf)
-            sf[Max_sf_idx]=Max_sf[Max_sf_idx]
-            sf[Min_sf_idx]=Min_sf[Min_sf_idx]
-            fileName=folders['Scaling_factors']+'\SF_'+str(index+ii).zfill(formats['fill_fn_all'])+'.out'
+            case=sf>Max_sf
+            sf[case]=Max_sf[case]
+            case=sf<Min_sf
+            sf[case]=Min_sf[case]
+            fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
             np.savetxt(fileName, sf,formats['fmt_sf'])
+            sf_mean_pop=np.mean(sf,axis=0)
             
-            for jj in range(nPop):
-                Cost_Obj_01[ii,jj]=Obj_RMSE(Sa_unsc_ave_split[ii],Sa_Tgt,Sample_sf[jj])
-                Cost_Obj_02[ii,jj]=Obj_RMSE(Sa_unsc_ave_split[ii],Sa_Tgt,Sample_sf[jj])
+            for x in range(nPop):
+                Cost_Obj_01[cmb,x]=Obj_RMSE(Sa_unsc_ave_split[cmb],Sa_Tgt,sf_mean_pop[x])
+                Cost_Obj_02[cmb,x]=Obj_std(Sa_suite,sf[:,x],Sa_unsc_ave_suite,sf_mean_pop[x])
             
         fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         np.savetxt(fileName, Par_F,formats['fmt_Par_F_CR'])

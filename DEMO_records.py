@@ -140,5 +140,5 @@ del Combs, Sa_unsc_ave
 #################################   DE    #################################
 '''
 ## Initialize populations
-DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt)
+DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
