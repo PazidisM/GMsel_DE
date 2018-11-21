@@ -33,7 +33,7 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
             split_end=NSeed
         
         print('\n')
-        print('Initializing Batch '+str(index_spl)+' of '+str(split_data['split_num']))
+        print('Initializing Batch '+str(index_spl+1)+' of '+str(split_data['split_num']+1))
         
         fileName=folders['Combinations']+'\Combs_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         Combs_split=np.loadtxt(fileName).astype(int)
