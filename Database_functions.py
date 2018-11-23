@@ -11,7 +11,7 @@ import scipy.io
 import itertools
 import math
 import sys
-from Cost_functions import Obj_RMSE as Obj_RMSE
+import Cost_functions 
 from tqdm import tqdm
 
 
@@ -201,7 +201,7 @@ def Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams):
     
     return  Sa,Rec_db_metadata,sf_ind, selectionParams, Ndatabase
 
-def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data):
+def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,sf_ind):
 
     # Calculate combinations
     Combs=np.array(list(itertools.combinations(Rec_db_metadata['idx'], selectionParams['nSeed'])))
@@ -213,21 +213,28 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data)
     
     # Incrementaly add records - Create trial sets
     rem=selectionParams['nGM']-selectionParams['nSeed']
-    Sample_sel_idx=-1*np.ones([NSeed,rem])
+    Sample_sel_idx=np.full((NSeed,rem),-1)
     #for ii in range(NSeed):
     for ii in tqdm(range(NSeed),miniters =round(NSeed*0.05),desc='Combinations'):
         for jj in range(rem):
-            Sample_RMSE=np.ones(Ndatabase)*np.inf
+            Sample_Cost=np.full((Ndatabase),np.inf)
             for kk in range(Ndatabase):
                 Sample_add=np.append(kk,Sample_sel_idx[ii][np.where(Sample_sel_idx[ii]!=-1)])   # ignore -1 values from initialization
                 Sample_suite=np.append(Combs[ii],Sample_add).astype(int)
+                Sa_suite=Sa[Sample_suite,:]
+                sf_ind_suite=sf_ind[Sample_suite]
                 Case=len(np.unique(Rec_db_metadata['EQID'][Sample_suite]))<=len(Sample_suite)-selectionParams['sameEvent']
                 if not Case:
                     Sample_Sa=Sa[Sample_suite]
                     Sample_Sa_ave=np.mat(np.transpose(np.mean(Sample_Sa,axis=0)))
                     Sample_sf=np.sum(Sa_Tgt-Sample_Sa_ave)/np.size(Sample_Sa_ave,1)
-                    Sample_RMSE[kk]=Obj_RMSE(Sample_Sa_ave,Sa_Tgt,Sample_sf)
-            Sample_sel_idx[ii,jj]=Sample_RMSE.argmin(0)
+                    if selectionParams['w_CF'][1]==0:
+                        Sample_Cost[kk]=Cost_functions.CF_0(Sample_Sa_ave,Sa_Tgt,Sample_sf)
+                    elif selectionParams['w_CF'][0]==0:
+                        Sample_Cost[kk]=Cost_functions.CF_1(Sa_suite,sf_ind_suite,Sample_Sa_ave)
+                    else:
+                        Sample_Cost[kk]=((selectionParams['w_CF'][0]*Cost_functions.CF_0(Sample_Sa_ave,Sa_Tgt,Sample_sf))**2+(selectionParams['w_CF'][1]*Cost_functions.CF_1(Sa_suite,sf_ind_suite,Sample_Sa_ave))**2)**0.5
+            Sample_sel_idx[ii,jj]=Sample_Cost.argmin(0)
             
     Combs=np.concatenate((Combs,Sample_sel_idx),axis=1)
     Sa_combs=Sa[Combs.astype(int)]

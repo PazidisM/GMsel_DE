@@ -44,13 +44,13 @@ maxScale=2
 a_g=0.25
 zeta=0.05
 soiltype='A'
-minScaleRec=log(0.15)
-maxScaleRec=log(12)
-std_w=0.0
+#w_CF=np.array([1.0 0.3])   # weights of cost functions for initial suites selection
+w_CF=[1.0 ,0.0]    # weights of cost functions for initial suites selection
 sameEvent=1
 max_diff_max=2
 max_diff_min=0.25
 nSeed=2
+
 
 # allowedRecs
 Vs30=[1000,  Inf]
@@ -73,8 +73,8 @@ CR_in=0.8
 split_bool=1    # 1 for split / 0 for no split
 split_size=1000
 
-key=['databaseFile','nGM', 'comp_num', 'comp_idx', 'Tmin', 'Tmax', 'minScale', 'maxScale', 'a_g', 'zeta', 'soiltype', 'minScaleRec','maxScaleRec', 'std_w', 'sameEvent','max_diff_max','max_diff_min','nSeed']
-value=[databaseFile,nGM, comp_num, comp_idx, Tmin, Tmax, minScale, maxScale, a_g, zeta, soiltype, minScaleRec, maxScaleRec,std_w,sameEvent,max_diff_max,max_diff_min,nSeed]
+key=['databaseFile','nGM', 'comp_num', 'comp_idx', 'Tmin', 'Tmax', 'minScale', 'maxScale', 'a_g', 'zeta', 'soiltype', 'sameEvent','max_diff_max','max_diff_min','nSeed','w_CF']
+value=[databaseFile,nGM, comp_num, comp_idx, Tmin, Tmax, minScale, maxScale, a_g, zeta, soiltype,sameEvent,max_diff_max,max_diff_min,nSeed,w_CF]
 temp=list(zip(key, value))
 selectionParams=dict(temp)
 
@@ -127,7 +127,7 @@ Sa=Sa[:,Periods['idx_T_match'][0]]
 Sa,Rec_db_metadata,sf_ind, selectionParams, Ndatabase=Database_functions.Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams)
 
 ## Calculate combinations / Create GM suites
-Combs, Sa_unsc_ave, NSeed, split_data=Database_functions.Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data)
+Combs, Sa_unsc_ave, NSeed, split_data=Database_functions.Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,sf_ind)
 
 ## Printing formats
 formats=folder_fmt_functions.fmt(SaveFolder,split_data,NSeed,Rec_db_metadata,DE_par)

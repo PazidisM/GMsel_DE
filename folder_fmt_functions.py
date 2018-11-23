@@ -11,13 +11,13 @@ import numpy as np
 def folder_init(mainFolder):
     Combinations=mainFolder+'\Combinations'
     Sa_unsc_ave=mainFolder+'\Sa_unsc_ave'
-    Cost_Obj_01=mainFolder+'\Cost_obj_01'
-    Cost_Obj_02=mainFolder+'\Cost_obj_02'
+    CF_0=mainFolder+'\CF_0'
+    CF_1=mainFolder+'\CF_1'
     Par_F=mainFolder+'\Par_F'
     Par_CR=mainFolder+'\Par_CR'
     Scaling_factors=mainFolder+'\Scaling_factors'
-    key=['Combinations','Sa_unsc_ave', 'Cost_Obj_01', 'Cost_Obj_02', 'Par_F', 'Par_CR', 'Scaling_factors']
-    value=[Combinations,Sa_unsc_ave, Cost_Obj_01, Cost_Obj_02, Par_F, Par_CR, Scaling_factors]
+    key=['Combinations','Sa_unsc_ave', 'CF_0', 'CF_1', 'Par_F', 'Par_CR', 'Scaling_factors']
+    value=[Combinations,Sa_unsc_ave, CF_0, CF_1, Par_F, Par_CR, Scaling_factors]
     temp=list(zip(key, value))
     folders=dict(temp)
     

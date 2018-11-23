@@ -7,8 +7,7 @@ Created on Fri Nov 16 18:53:38 2018
 
 import math
 import numpy as np
-from Cost_functions import Obj_RMSE as Obj_RMSE
-from Cost_functions import Obj_std as Obj_std
+import Cost_functions 
 from tqdm import tqdm
 
 def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
@@ -41,8 +40,8 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
         Sa_unsc_ave_split=np.loadtxt(fileName)
         Par_F=np.matlib.repmat(F_in,len(Combs_split),nPop)
         Par_CR=np.matlib.repmat(CR_in,len(Combs_split),nPop)
-        Cost_Obj_01=np.empty([len(Combs_split),nPop])
-        Cost_Obj_02=np.empty([len(Combs_split),nPop])
+        CF_0=np.empty([len(Combs_split),nPop])
+        CF_1=np.empty([len(Combs_split),nPop])
         
         #for cmb in range(len(Combs_split)):
         for cmb in tqdm(range(len(Combs_split)),miniters =round(len(Combs_split)*0.05),desc='% of batch'):
@@ -63,20 +62,19 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
             sf[case]=Min_sf[case]
             fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
             np.savetxt(fileName, sf,formats['fmt_sf'])
-            sf_mean_pop=np.mean(sf,axis=0)
             
             for x in range(nPop):
-                Cost_Obj_01[cmb,x]=Obj_RMSE(Sa_unsc_ave_split[cmb],Sa_Tgt,sf_mean_pop[x])
-                Cost_Obj_02[cmb,x]=Obj_std(Sa_suite,sf[:,x],Sa_unsc_ave_suite,sf_mean_pop[x])
+                CF_0[cmb,x]=Cost_functions.CF_0(Sa_unsc_ave_split[cmb],Sa_Tgt,sf[:,x])
+                CF_1[cmb,x]=Cost_functions.CF_1(Sa_suite,sf[:,x],Sa_unsc_ave_suite)
             
         fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         np.savetxt(fileName, Par_F,formats['fmt_Par_F_CR'])
         fileName=folders['Par_CR']+'\Par_CR_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         np.savetxt(fileName, Par_CR,formats['fmt_Par_F_CR'])
-        fileName=folders['Cost_Obj_01']+'\Cost_Obj_01_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        np.savetxt(fileName, Cost_Obj_01,formats['fmt_Cost'])
-        fileName=folders['Cost_Obj_02']+'\Cost_Obj_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        np.savetxt(fileName, Cost_Obj_02,formats['fmt_Cost'])        
+        fileName=folders['CF_0']+'\CF_0_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+        np.savetxt(fileName, CF_0,formats['fmt_Cost'])
+        fileName=folders['CF_1']+'\CF_1_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+        np.savetxt(fileName, CF_1,formats['fmt_Cost'])        
             
         index_spl=index_spl+1
         index=split_end
