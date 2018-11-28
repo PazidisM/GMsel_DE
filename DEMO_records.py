@@ -6,11 +6,12 @@ Created on Sat Sep  1 22:08:10 2018
 """
 
 #%reset -f
+from time import time
 ## User Input
 # Selection parameters
 #import os
 #import sys
-from math import log as log
+#from math import log as log
 #import numpy as np
 #import scipy
 #import scipy.io
@@ -25,6 +26,7 @@ Inf=1.8e308
 '''
 #################################   User Input    #################################
 '''
+start_time=time()
 # selectionParams
 selectionParams={}
 SaveFolder='C:\Marios\Research\Tests\GM_selection_DEMO\Python\GMsel_DE\TEST'
@@ -40,26 +42,26 @@ comp_idx=1    # used only if comp_num==1
 Tmin=0.08
 Tmax=2
 minScale=0.5
-maxScale=2
+maxScale=6
 a_g=0.25
 zeta=0.05
 soiltype='A'
 #w_CF=np.array([1.0 0.3])   # weights of cost functions for initial suites selection
-w_CF=[1.0 ,0.0]    # weights of cost functions for initial suites selection
+w_CF=[1.0 ,0.3]    # weights of cost functions for initial suites selection
 sameEvent=1
-max_diff_max=2
+max_diff_max=6
 max_diff_min=0.25
-nSeed=2
+nSeed=3
 
 
 # allowedRecs
-Vs30=[1000,  Inf]
+Vs30=[1000, Inf]
 Mag=[5, Inf]
 D=[10, Inf]
 
 # DE parameters
 MaxGen=100
-nPop=50
+nPop=100
 F_l=0.2
 F_u=1
 tau_1=0.1
@@ -142,3 +144,8 @@ del Combs, Sa_unsc_ave
 ## Initialize populations
 DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
+## Differential Evolution
+DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+end_time=time()
+dur=end_time-start_time
+print(dur)

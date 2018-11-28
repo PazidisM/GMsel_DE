@@ -32,7 +32,7 @@ def dictionary_fn(key):
 def screen_database(selectionParams,allowedRecs):
 
     # load database
-    mat = scipy.io.loadmat('ESD_Rexel_meta_data.mat')
+    mat = scipy.io.loadmat(selectionParams['databaseFile'])
 
     Rec_db_metadata={}
 
@@ -69,7 +69,7 @@ def screen_database(selectionParams,allowedRecs):
         else:
             ## Spectral Accelerations
             Sa=mat['Sa_2']
-            
+
     Sa=np.log(Sa)
 
     key=['EQID','EQidx','Event_name', 'Distance', 'Vs30', 'Magnitude', 'Component']
@@ -92,9 +92,9 @@ def screen_database(selectionParams,allowedRecs):
     Periods=dict(temp)
 
     # Screening
-    Vs_screen=np.intersect1d(np.where(Rec_db_metadata['Vs30']>=allowedRecs['Vs30'][0]),np.where(Rec_db_metadata['Vs30']<=allowedRecs['Vs30'][1]))
-    Magnitude_screen=np.intersect1d(np.where(Rec_db_metadata['Magnitude']>=allowedRecs['Mag'][0]),np.where(Rec_db_metadata['Magnitude']<=allowedRecs['Mag'][1]))
-    Distance_screen=np.intersect1d(np.where(Rec_db_metadata['Distance']>=allowedRecs['D'][0]),np.where(Rec_db_metadata['Distance']<=allowedRecs['D'][1]))
+    Vs_screen=np.intersect1d(np.where(Rec_db_metadata['Vs30']>=allowedRecs['Vs30'][0])[0],np.where(Rec_db_metadata['Vs30']<=allowedRecs['Vs30'][1])[0])
+    Magnitude_screen=np.intersect1d(np.where(Rec_db_metadata['Magnitude']>=allowedRecs['Mag'][0])[0],np.where(Rec_db_metadata['Magnitude']<=allowedRecs['Mag'][1])[0])
+    Distance_screen=np.intersect1d(np.where(Rec_db_metadata['Distance']>=allowedRecs['D'][0])[0],np.where(Rec_db_metadata['Distance']<=allowedRecs['D'][1])[0])
     
     Fin_1_screen=np.intersect1d(Vs_screen,Magnitude_screen)
     Fin_screen=np.intersect1d(Fin_1_screen,Distance_screen)
@@ -168,13 +168,13 @@ def EC8_Elastic_Spectrum_Type_1(soiltype_EC8,a_g_EC8,zeta_EC8,periods_EC8):
 
 def Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams):
     ## Individual scaling factor to match target spectrum
-    sf_ind=np.sum((Sa_Tgt-Sa)/len(Sa),1)
+    sf_ind=np.sum(Sa_Tgt-Sa,1)/len(Sa_Tgt[0])
     
     ## Calclulate maximum individual scaling factors
     Max_sf_ind=selectionParams['max_diff_max']/np.exp(np.max(Sa-Sa_Tgt,1))
     Max_sf_ind[np.where(Max_sf_ind>selectionParams['maxScale'])]=selectionParams['maxScale']
     
-    Min_sf_ind=selectionParams['max_diff_min']/np.exp(np.max(Sa-Sa_Tgt,1))
+    Min_sf_ind=selectionParams['max_diff_min']/np.exp(np.min(Sa-Sa_Tgt,1))
     Min_sf_ind[np.where(Min_sf_ind<selectionParams['minScale'])]=selectionParams['minScale']
     
     del_idx=np.concatenate((np.array(np.where(Max_sf_ind<selectionParams['minScale'])),np.array(np.where(Min_sf_ind>selectionParams['maxScale']))),axis=1)
