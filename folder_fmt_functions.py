@@ -9,15 +9,27 @@ import math
 import numpy as np
 
 def folder_init(mainFolder):
+    
+    # general folders
     Combinations=mainFolder+'\Combinations'
     Sa_unsc_ave=mainFolder+'\Sa_unsc_ave'
-    CF_0=mainFolder+'\CF_0'
-    CF_1=mainFolder+'\CF_1'
-    Par_F=mainFolder+'\Par_F'
-    Par_CR=mainFolder+'\Par_CR'
-    Scaling_factors=mainFolder+'\Scaling_factors'
-    key=['Combinations','Sa_unsc_ave', 'CF_0', 'CF_1', 'Par_F', 'Par_CR', 'Scaling_factors']
-    value=[Combinations,Sa_unsc_ave, CF_0, CF_1, Par_F, Par_CR, Scaling_factors]
+    
+    # population folders
+    CF_0=mainFolder+'\Population\CF_0'
+    CF_1=mainFolder+'\Population\CF_1'
+    Par_F=mainFolder+'\Population\Par_F'
+    Par_CR=mainFolder+'\Population\Par_CR'
+    Scaling_factors=mainFolder+'\Population\Scaling_factors'
+    
+    # 1st Pareto front folders
+    CF_0_Pareto=mainFolder+'\First_Pareto_front\CF_0'
+    CF_1_Pareto=mainFolder+'\First_Pareto_front\CF_1'
+    Par_F_Pareto=mainFolder+'\First_Pareto_front\Par_F'
+    Par_CR_Pareto=mainFolder+'\First_Pareto_front\Par_CR'
+    Scaling_factors_Pareto=mainFolder+'\First_Pareto_front\Scaling_factors'
+    
+    key=['Combinations','Sa_unsc_ave', 'CF_0', 'CF_1', 'Par_F', 'Par_CR', 'Scaling_factors', 'CF_0_Pareto', 'CF_1_Pareto', 'Par_F_Pareto', 'Par_CR_Pareto', 'Scaling_factors_Pareto']
+    value=[Combinations,Sa_unsc_ave, CF_0, CF_1, Par_F, Par_CR, Scaling_factors, CF_0_Pareto, CF_1_Pareto, Par_F_Pareto, Par_CR_Pareto, Scaling_factors_Pareto]
     temp=list(zip(key, value))
     folders=dict(temp)
     

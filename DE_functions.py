@@ -70,7 +70,7 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
         CF_1=np.empty([len(Combs_split),nPop])
         
         #for cmb in range(len(Combs_split)):
-        for cmb in tqdm(range(len(Combs_split)),miniters =round(len(Combs_split)*0.05),desc='% of batch'):
+        for cmb in tqdm(range(len(Combs_split)),miniters =round(len(Combs_split)*0.10),desc='% of batch'):
             sf=np.random.uniform(minSF,maxSF,(nGM, nPop))
             Sa_suite=Sa[Combs_split[cmb],:]
             Sa_unsc_ave_suite=Sa_unsc_ave_split[cmb,:]
@@ -223,13 +223,43 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                     R[key]=np.concatenate((P[key][cmb,:],C[key][case]),axis=0)
                 R['sf_cmb']=np.concatenate((P['sf_cmb'],C['sf_cmb'][:,np.where(case)[1]]),axis=1)
                 
+                # NSGAII - sort & truncate
                 F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
                 P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
                 
+                # form next generation population
                 for key in [ v for v in C if v != 'sf_cmb' ]:
                     P[key][cmb,:]=R[key][P_n]
                 P['sf_cmb']=R['sf_cmb'][:,P_n]
-                
+            
+            #print(len(F[1]))
+            # 1st Pareto front
+#            if len(F[1])<nPop:
+#                fileName=folders['Par_F_Pareto']+'\Par_F_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, R['Par_F'][F[1]],formats['fmt_Par_F_CR'])
+#                fileName=folders['Par_CR_Pareto']+'\Par_CR_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, R['Par_CR'][F[1]],formats['fmt_Par_F_CR'])
+#                fileName=folders['CF_0_Pareto']+'\CF_0_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, R['CF_0'][F[1]],formats['fmt_Cost'])
+#                fileName=folders['CF_1_Pareto']+'\CF_1_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, R['CF_1'][F[1]],formats['fmt_Cost'])
+#                fileName=folders['Scaling_factors_Pareto']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, R['sf_cmb'][:,F[1]],formats['fmt_sf'])
+#            else:
+#                fileName=folders['Par_F_Pareto']+'\Par_F_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, P['Par_F'][cmb,:],formats['fmt_Par_F_CR'])
+#                fileName=folders['Par_CR_Pareto']+'\Par_CR_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, P['Par_CR'][cmb,:],formats['fmt_Par_F_CR'])
+#                fileName=folders['CF_0_Pareto']+'\CF_0_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, P['CF_0'][cmb,:],formats['fmt_Cost'])
+#                fileName=folders['CF_1_Pareto']+'\CF_1_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, P['CF_1'][cmb,:],formats['fmt_Cost'])
+#                fileName=folders['Scaling_factors_Pareto']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+#                np.savetxt(fileName, P['sf_cmb'],formats['fmt_sf'])
+#            
+            fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+            np.savetxt(fileName, P['sf_cmb'],formats['fmt_sf'])
+        
         fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         np.savetxt(fileName, P['Par_F'],formats['fmt_Par_F_CR'])
         fileName=folders['Par_CR']+'\Par_CR_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'

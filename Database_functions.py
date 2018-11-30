@@ -203,6 +203,7 @@ def Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams):
 
 def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,sf_ind):
 
+    case_st=bool(selectionParams['sameEventStation'])
     # Calculate combinations
     Combs=np.array(list(itertools.combinations(Rec_db_metadata['idx'], selectionParams['nSeed'])))
     
@@ -215,7 +216,7 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,
     rem=selectionParams['nGM']-selectionParams['nSeed']
     Sample_sel_idx=np.full((NSeed,rem),-1)
     #for ii in range(NSeed):
-    for ii in tqdm(range(NSeed),miniters =round(NSeed*0.05),desc='Combinations'):
+    for ii in tqdm(range(NSeed),miniters =round(NSeed*0.10),desc='Combinations'):
         for jj in range(rem):
             Sample_Cost=np.full((Ndatabase),np.inf)
             for kk in range(Ndatabase):
@@ -223,8 +224,12 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,
                 Sample_suite=np.append(Combs[ii],Sample_add).astype(int)
                 Sa_suite=Sa[Sample_suite,:]
                 sf_ind_suite=sf_ind[Sample_suite]
-                Case=len(np.unique(Rec_db_metadata['EQID'][Sample_suite]))<=len(Sample_suite)-selectionParams['sameEvent']
-                if not Case:
+                case_01=len(np.unique(Rec_db_metadata['EQID'][Sample_suite]))>len(Sample_suite)-selectionParams['sameEvent']   # same event records constraint
+                case_02=len(np.unique(Rec_db_metadata['EQidx'][Sample_suite]))==len(Sample_suite)   # components allowed constraint
+                if not case_02:
+                    case_02=case_st
+                
+                if case_01 and case_02:
                     Sample_Sa=Sa[Sample_suite]
                     Sample_Sa_ave=np.mat(np.transpose(np.mean(Sample_Sa,axis=0)))
                     Sample_sf=np.sum(Sa_Tgt-Sample_Sa_ave)/np.size(Sample_Sa_ave,1)
@@ -245,11 +250,3 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,
     print('\n')
     
     return Combs, Sa_unsc_ave, NSeed,split_data
-
-
-
-
-
-
-
-

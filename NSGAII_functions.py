@@ -85,9 +85,12 @@ def crowding_distance_assignment(F,Cost_0,Cost_1,nPop):
             I['cd_1'][0]=np.inf
             I['cd_1'][-1]=np.inf
             I['cd']=[0]*len(F[f_idx])
-            for i in range(1,len(F[f_idx])-1):
-                I['cd_0'][i]=(I['sort_CF_0'][i+1]-I['sort_CF_0'][i-1])/(max(I['sort_CF_0'])-min(I['sort_CF_0']))
-                I['cd_1'][i]=(I['sort_CF_1'][i+1]-I['sort_CF_1'][i-1])/(max(I['sort_CF_1'])-min(I['sort_CF_1']))
+            try:
+                for i in range(1,len(F[f_idx])-1):
+                    I['cd_0'][i]=(I['sort_CF_0'][i+1]-I['sort_CF_0'][i-1])/(max(I['sort_CF_0'])-min(I['sort_CF_0']))
+                    I['cd_1'][i]=(I['sort_CF_1'][i+1]-I['sort_CF_1'][i-1])/(max(I['sort_CF_1'])-min(I['sort_CF_1']))
+            except:
+                print(F,f_idx,I['sort_CF_0'],I['sort_CF_1'])
             for i in range(len(F[f_idx])):
                 I['cd'][i]=I['cd_0'][I['sort_CF_0_idx'].index(i)]+I['cd_1'][I['sort_CF_1_idx'].index(i)]
             I['sorted_final']=sorted(range(len(I['cd'])), key=lambda k: I['cd'][k])

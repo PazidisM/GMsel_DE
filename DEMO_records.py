@@ -37,7 +37,7 @@ databaseFile='ESD_Rexel_meta_data.mat'
 #databaseFile='NGA_W2_meta_data.mat'
 
 nGM=10
-comp_num=2
+comp_num=2    # search in both components
 comp_idx=1    # used only if comp_num==1
 Tmin=0.08
 Tmax=2
@@ -46,9 +46,9 @@ maxScale=6
 a_g=0.25
 zeta=0.05
 soiltype='A'
-#w_CF=np.array([1.0 0.3])   # weights of cost functions for initial suites selection
-w_CF=[1.0 ,0.3]    # weights of cost functions for initial suites selection
-sameEvent=1
+w_CF=[1.0 ,0.0]    # weights of cost functions for initial suites selection
+sameEvent=1     # number of same event records
+sameEventStation=1     # 0: can only contain 1 component per suite, 1: can contain both components
 max_diff_max=6
 max_diff_min=0.25
 nSeed=3
@@ -75,8 +75,8 @@ CR_in=0.8
 split_bool=1    # 1 for split / 0 for no split
 split_size=1000
 
-key=['databaseFile','nGM', 'comp_num', 'comp_idx', 'Tmin', 'Tmax', 'minScale', 'maxScale', 'a_g', 'zeta', 'soiltype', 'sameEvent','max_diff_max','max_diff_min','nSeed','w_CF']
-value=[databaseFile,nGM, comp_num, comp_idx, Tmin, Tmax, minScale, maxScale, a_g, zeta, soiltype,sameEvent,max_diff_max,max_diff_min,nSeed,w_CF]
+key=['databaseFile','nGM', 'comp_num', 'comp_idx', 'Tmin', 'Tmax', 'minScale', 'maxScale', 'a_g', 'zeta', 'soiltype', 'sameEvent','max_diff_max','max_diff_min','nSeed','w_CF','sameEventStation']
+value=[databaseFile,nGM, comp_num, comp_idx, Tmin, Tmax, minScale, maxScale, a_g, zeta, soiltype,sameEvent,max_diff_max,max_diff_min,nSeed,w_CF,sameEventStation]
 temp=list(zip(key, value))
 selectionParams=dict(temp)
 
@@ -141,6 +141,7 @@ del Combs, Sa_unsc_ave
 '''
 #################################   DE    #################################
 '''
+
 ## Initialize populations
 DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
