@@ -15,21 +15,28 @@ def folder_init(mainFolder):
     Sa_unsc_ave=mainFolder+'\Sa_unsc_ave'
     
     # population folders
-    CF_0=mainFolder+'\Population\CF_0'
-    CF_1=mainFolder+'\Population\CF_1'
-    Par_F=mainFolder+'\Population\Par_F'
-    Par_CR=mainFolder+'\Population\Par_CR'
-    Scaling_factors=mainFolder+'\Population\Scaling_factors'
+    CF_0=mainFolder+'\Population\All\CF_0'
+    CF_1=mainFolder+'\Population\All\CF_1'
+    Par_F=mainFolder+'\Population\All\Par_F'
+    Par_CR=mainFolder+'\Population\All\Par_CR'
+    Scaling_factors=mainFolder+'\Population\All\Scaling_factors'
     
-    # 1st Pareto front folders
-    CF_0_Pareto=mainFolder+'\First_Pareto_front\CF_0'
-    CF_1_Pareto=mainFolder+'\First_Pareto_front\CF_1'
-    Par_F_Pareto=mainFolder+'\First_Pareto_front\Par_F'
-    Par_CR_Pareto=mainFolder+'\First_Pareto_front\Par_CR'
-    Scaling_factors_Pareto=mainFolder+'\First_Pareto_front\Scaling_factors'
+    # 1st Pareto front folders for every combination
+    CF_0_Pareto=mainFolder+'\Population\First_Pareto_front\CF_0'
+    CF_1_Pareto=mainFolder+'\Population\First_Pareto_front\CF_1'
+    Par_F_Pareto=mainFolder+'\Population\First_Pareto_front\Par_F'
+    Par_CR_Pareto=mainFolder+'\Population\First_Pareto_front\Par_CR'
+    Scaling_factors_Pareto=mainFolder+'\Population\First_Pareto_front\Scaling_factors'
+    
+    # Global 1st Pareto front folders of all combinations
+    CF_0_Pareto_GL=mainFolder+'\Global_First_Pareto_front\CF_0'
+    CF_1_Pareto_GL=mainFolder+'\Global_First_Pareto_front\CF_1'
+    Par_F_Pareto_GL=mainFolder+'\Global_First_Pareto_front\Par_F'
+    Par_CR_Pareto_GL=mainFolder+'\Global_First_Pareto_front\Par_CR'
+    Scaling_factors_Pareto_GL=mainFolder+'\Global_First_Pareto_front\Scaling_factors'
     
     key=['Combinations','Sa_unsc_ave', 'CF_0', 'CF_1', 'Par_F', 'Par_CR', 'Scaling_factors', 'CF_0_Pareto', 'CF_1_Pareto', 'Par_F_Pareto', 'Par_CR_Pareto', 'Scaling_factors_Pareto']
-    value=[Combinations,Sa_unsc_ave, CF_0, CF_1, Par_F, Par_CR, Scaling_factors, CF_0_Pareto, CF_1_Pareto, Par_F_Pareto, Par_CR_Pareto, Scaling_factors_Pareto]
+    value=[Combinations,Sa_unsc_ave, CF_0, CF_1, Par_F, Par_CR, Scaling_factors, CF_0_Pareto, CF_1_Pareto, Par_F_Pareto, Par_CR_Pareto, Scaling_factors_Pareto, CF_0_Pareto_GL, CF_1_Pareto_GL, Par_F_Pareto_GL, Par_CR_Pareto_GL, Scaling_factors_Pareto_GL]
     temp=list(zip(key, value))
     folders=dict(temp)
     

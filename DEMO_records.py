@@ -48,16 +48,16 @@ zeta=0.05
 soiltype='A'
 w_CF=[1.0 ,0.0]    # weights of cost functions for initial suites selection
 sameEvent=1     # number of same event records
-sameEventStation=1     # 0: can only contain 1 component per suite, 1: can contain both components
+sameEventStation=0     # 0: can only contain 1 component per suite, 1: can contain both components
 max_diff_max=6
 max_diff_min=0.25
-nSeed=3
+nSeed=1
 
 
 # allowedRecs
-Vs30=[1000, Inf]
-Mag=[5, Inf]
-D=[10, Inf]
+Vs30=[850, Inf]
+Mag=[5.0, Inf]
+D=[55, Inf]
 
 # DE parameters
 MaxGen=100
@@ -72,7 +72,7 @@ F_in=0.5
 CR_in=0.8
 
 # Split data in batches for efficient RAM usage
-split_bool=1    # 1 for split / 0 for no split
+split_bool=0    # 1 for split / 0 for no split
 split_size=1000
 
 key=['databaseFile','nGM', 'comp_num', 'comp_idx', 'Tmin', 'Tmax', 'minScale', 'maxScale', 'a_g', 'zeta', 'soiltype', 'sameEvent','max_diff_max','max_diff_min','nSeed','w_CF','sameEventStation']
