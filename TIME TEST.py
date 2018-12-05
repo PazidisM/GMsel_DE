@@ -1,186 +1,673 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec  3 16:01:36 2018
+Created on Wed Dec  5 10:08:23 2018
 
 @author: Marios
 """
-import numpy as np
 
-import time 
-import math
-import numpy as np
-import Cost_functions 
-from tqdm import tqdm
-import random
-#import math
-#import time
-from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
-from NSGAII_functions import crowding_distance_assignment as crowding_distance_assignment
 
-    split_size=split_data['split_size']
-    Max_sf_ind=selectionParams['Max_sf_ind']
-    Min_sf_ind=selectionParams['Min_sf_ind']
-    nGM=selectionParams['nGM']
-    nPop=DE_par['nPop']
-    F_l=DE_par['F_l']
-    F_u=DE_par['F_u']
-    tau_1=DE_par['tau_1']
-    tau_2=DE_par['tau_2']
-    cond='min'
-    MaxGen=DE_par['MaxGen']
+st=time()
+for i in range(rep):
+    u_c_01=Cost_functions.CF_0(Sa_unsc_ave_suite,Sa_Tgt,u)
+
+end=time()
+dur=end-st
+print(dur)
+
+
+
+def CF_0(Sa_ave,Sa_Tgt,sf_suite):
     
-    index=0
-    index_spl=0
-    while index<NSeed:
-        
-        print('\n')
-        print('Optimizing Batch '+str(index_spl)+' of '+str(split_data['split_num']))
-        
-        split_start=index%split_size+index//split_size*split_size
-        split_end=split_start+split_size
-        if split_end>NSeed:
-            split_end=NSeed
-        
-        P={}
-        fileName=folders['Combinations']+'\Combs_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        Combs_split=np.loadtxt(fileName).astype(int)
-        fileName=folders['Sa_unsc_ave']+'\Sa_unsc_ave_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        Sa_unsc_ave_split=np.loadtxt(fileName)
-        fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        P['Par_F']=np.loadtxt(fileName)
-        fileName=folders['Par_CR']+'\Par_CR_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        P['Par_CR']=np.loadtxt(fileName)
-        fileName=folders['CF_0']+'\CF_0_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        P['CF_0']=np.loadtxt(fileName)
-        fileName=folders['CF_1']+'\CF_1_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        P['CF_1']=np.loadtxt(fileName)
-        
-        for cmb in tqdm(range(split_end-split_start),miniters =int((split_end-split_start)*0.05),desc='% of batch',maxinterval=3600):
-        #for cmb in range(split_end-split_start):
-            fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-            P['sf_cmb']=np.loadtxt(fileName)
-            Sa_unsc_ave_suite=Sa_unsc_ave_split[cmb,:]
-            Sa_suite=Sa[Combs_split[cmb],:]
-            
-            start_time=time.clock()
-            for gen in range(MaxGen):
-            
-                C={}
-                C['sf_cmb']=np.zeros((nGM, nPop))
-                C['CF_0']=np.full((1, nPop),np.inf)
-                C['CF_1']=np.full((1, nPop),np.inf)
-                C['Par_F']=np.full((1, nPop),np.inf)
-                C['Par_CR']=np.full((1, nPop),np.inf)
-                start_time=time.clock()
-                for x in range(nPop):
-                    start_time=time.clock()
-                    rand_1=random.uniform(0,1)
-                    rand_2=random.uniform(0,1)
-                    rand_3=random.uniform(0,1)
-                    rand_4=random.uniform(0,1)
-                    
-                    ## Mutation (DE/rand/1 for now) ##
-                    Xr=random.sample([i for i in range(0,nPop) if i != x],3)
-                    if rand_2<tau_1:
-                        u_F=F_l+rand_1*F_u
-                    else:
-                        u_F=P['Par_F'][cmb,x]
-                    
-                    u=P['sf_cmb'][:,Xr[0]]+u_F*(P['sf_cmb'][:,Xr[1]]-P['sf_cmb'][:,Xr[2]])   #DE/rand/1
-                    
-                    
-                    # enforce constraints in individual values
-                    case=u>Max_sf_ind[Combs_split[cmb]]
-                    u[case]=Max_sf_ind[Combs_split[cmb,np.where(case)][0]]
-                    case=u<Min_sf_ind[Combs_split[cmb]]
-                    u[case]=Min_sf_ind[Combs_split[cmb,np.where(case)][0]]
-                    
-                    ## Crossover ##
-                    if rand_4<tau_2:
-                        u_CR=rand_3
-                    else:
-                        u_CR=P['Par_CR'][cmb,x]
-                    
-                    case_01=random.choice(u)==u
-                    case_02=np.array([random.random() for i in range(nGM)])<=u_CR
-                    case=~np.array(case_01 | case_02)
-                    u[case]=P['sf_cmb'][case,x]
-                    u.shape=(nGM,1)
-                    # Domination check
-                    u_c_01=Cost_functions.CF_0(Sa_unsc_ave_suite,Sa_Tgt,u)
-                    
-                    start_time=time.clock()
-                    u_c_02=Cost_functions.CF_1(Sa_suite,u,Sa_unsc_ave_suite)
-                    end_time=time.clock()
-                    
-                    case=two_obj_dominance(P['CF_0'][cmb,x],P['CF_1'][cmb,x],u_c_01,u_c_02,cond)
-                    
-                    if case==1:
-                        P['sf_cmb'][:,x]=u[:,0]     # DEMO
-                        P['CF_0'][cmb,x]=u_c_01
-                        P['CF_1'][cmb,x]=u_c_02
-                        P['Par_F'][cmb,x]=u_F
-                        P['Par_CR'][cmb,x]=u_CR
-                    elif case==2:
-                        C['sf_cmb'][:,x]=u[:,0]
-                        C['CF_0'][0,x]=u_c_01
-                        C['CF_1'][0,x]=u_c_02
-                        C['Par_F'][0,x]=u_F
-                        C['Par_CR'][0,x]=u_CR
-                    dur=end_time-start_time
-                    print(dur)
-                # combine parent and offspring populations
-                R={}
-                case=C['CF_0']!=np.inf
-                for key in [ v for v in C if v != 'sf_cmb' ]:
-                    R[key]=np.concatenate((P[key][cmb,:],C[key][case]),axis=0)
-                R['sf_cmb']=np.concatenate((P['sf_cmb'],C['sf_cmb'][:,np.where(case)[1]]),axis=1)
-                
-                # NSGAII - sort and truncate
-                F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
-                P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
-                
-                # form next generation population
-                for key in [ v for v in C if v != 'sf_cmb' ]:
-                    P[key][cmb,:]=R[key][P_n]
-                P['sf_cmb']=R['sf_cmb'][:,P_n]
+    sf_ave=np.mean(sf_suite)
+    diff=Sa_ave+sf_ave-Sa_Tgt
+    z=math.sqrt(np.sum(np.power(diff,2))/np.size(Sa_Tgt,1))
+    
+    return z
 
-            #print(len(F[1]))
-            # 1st Pareto front
-#            if len(F[1])<nPop:
-#                fileName=folders['Par_F_Pareto']+'\Par_F_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, R['Par_F'][F[1]],formats['fmt_Par_F_CR'])
-#                fileName=folders['Par_CR_Pareto']+'\Par_CR_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, R['Par_CR'][F[1]],formats['fmt_Par_F_CR'])
-#                fileName=folders['CF_0_Pareto']+'\CF_0_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, R['CF_0'][F[1]],formats['fmt_Cost'])
-#                fileName=folders['CF_1_Pareto']+'\CF_1_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, R['CF_1'][F[1]],formats['fmt_Cost'])
-#                fileName=folders['Scaling_factors_Pareto']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, R['sf_cmb'][:,F[1]],formats['fmt_sf'])
-#            else:
-#                fileName=folders['Par_F_Pareto']+'\Par_F_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, P['Par_F'][cmb,:],formats['fmt_Par_F_CR'])
-#                fileName=folders['Par_CR_Pareto']+'\Par_CR_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, P['Par_CR'][cmb,:],formats['fmt_Par_F_CR'])
-#                fileName=folders['CF_0_Pareto']+'\CF_0_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, P['CF_0'][cmb,:],formats['fmt_Cost'])
-#                fileName=folders['CF_1_Pareto']+'\CF_1_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, P['CF_1'][cmb,:],formats['fmt_Cost'])
-#                fileName=folders['Scaling_factors_Pareto']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-#                np.savetxt(fileName, P['sf_cmb'],formats['fmt_sf'])
+
+tot_dur=0
+for w in range(20):
+    st=time()
+    for i in range(rep):
+        
+#        sf_ave=np.mean(u)
+#        sf_ave=np.sum(u)/np.size(u,0)
+#        sf_ave=np.sum(u)/len(u)
+#        diff=Sa_unsc_ave_suite+sf_ave-Sa_Tgt
+#        z=math.sqrt(np.sum(np.power(diff,2))/np.size(Sa_Tgt,1))
+#        z=(np.sum(np.power(diff,2))/np.size(Sa_Tgt,1))**0.5
+        
+#        z=(np.sum(diff**2)/len(Sa_Tgt[0]))**0.5
+#        z=(np.sum(diff**2)/np.size(Sa_Tgt,1))**0.5
+#        z=(np.sum((Sa_unsc_ave_suite+sf_ave-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+        z=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+
+        
+#        u_c_01=Cost_functions.CF_0(Sa_unsc_ave_suite,Sa_Tgt,u)
+    
+    end=time()
+    dur=end-st
+    tot_dur=tot_dur+dur
+    print(dur)
+    
+print('\n')
+print(tot_dur/20)
+
+
+np.power(diff,2)
+
+
+np.size(Sa_Tgt,1)
+len(Sa_Tgt[0])
+
+
+
+tot_dur=0
+for w in range(5):
+    st=time()
+    for i in range(rep):
+        
+#        u_c_02=Cost_functions.CF_1(Sa_suite,u,Sa_unsc_ave_suite)
+        
+        
+        sf_suite_mean=np.sum(sf_suite)/len(sf_suite)
+        sf_suite.shape=(len(sf_suite),1)
+        
+#        diff=Sa_suite+sf_suite-(Sa_unsc_ave_suite+sf_suite_mean)
+        
+        
+        
+        
+#        var=diff**2/(len(sf_suite)-1)
+        
+#        
+#       var_mean=np.sum(var,0)/len(var)
+        
+#       z=var_mean**0.5
+        
+#        z=(np.sum(var)/len(var))**0.5
+        
+#        z=(np.sum(diff**2/(len(sf_suite)-1))/len(var))**0.5
+        
+        z=(np.sum((Sa_suite+sf_suite-(Sa_unsc_ave_suite+sf_suite_mean))**2/(len(sf_suite)-1))/len(sf_suite))**0.5
+#       
+
+#         u_c_02=Cost_functions.CF_1(Sa_suite,u,Sa_unsc_ave_suite)
+        
+#        z=(np.sum((Sa_suite+sf_suite-(Sa_unsc_ave_suite+np.sum(sf_suite)/len(sf_suite)))**2/(len(sf_suite)-1))/len(sf_suite))**0.5
+        
+    end=time()
+    dur=end-st
+    tot_dur=tot_dur+dur
+    print(dur)
+    
+print('\n')
+print(tot_dur/5)
+
+
+        z=(np.sum((Sa_suite+sf_suite-(Sa_ave+sf_suite_mean))**2/(len(sf_suite)-1))/len(sf_suite))**0.5
+
+
+ans=np.sum(var,1)/len(var)
+ans=np.sum(np.sum(var,1))/len(var)
+ans=np.sum(var)/len(var)
+
+np.size(sf_suite,0)
+
+
+
+        sf_suite_mean=np.mean(sf_suite)
+        sf_suite.shape=(len(sf_suite),1)
+        diff=Sa_suite+sf_suite-(Sa_unsc_ave_suite+sf_suite_mean)
+        var=np.power(diff,2)/(len(sf_suite)-1)
+        var_mean=np.mean(var)
+        z=np.sqrt(var_mean)
+    
+
+ans=(P['sf_cmb'][:,Xr[0]]+u_F*(P['sf_cmb'][:,Xr[1]]-P['sf_cmb'][:,Xr[2]]))
+
+u_c_02=Cost_functions.CF_1(Sa_suite,u,Sa_unsc_ave_suite)
+
+sf_suite=ans
+
+        case_01=((P['CF_0'][cmb,x]<u_c_01)and(P['CF_1'][cmb,x]<=u_c_02))or((P['CF_0'][cmb,x]<=u_c_01)and(P['CF_1'][cmb,x]<u_c_02))
+        case_02=((P['CF_0'][cmb,x]>u_c_01)and(P['CF_1'][cmb,x]>=u_c_02))or((P['CF_0'][cmb,x]>=u_c_01)and(P['CF_1'][cmb,x]>u_c_02))
+        if cond=='min':
+            if case_01:
+                case=0    # p dominates q
+            elif case_02:
+                case=1    # q dominates p
+            else:
+                case=2    # nondominated
+        elif cond=='max':
+            if case_01:
+                case=1    # q dominates p
+            elif case_02:
+                case=0    # p dominates q
+            else:
+                case=2    # nondominated
+    return case
+
+
+
+import Cost_functions 
+from time import time as time
+import numpy as np
+import math
+import statistics
+
+import scipy as sp
+
+ans=[random.random() for i in range(nGM)]
+ans=[random.random() for i in range(nGM)]
+
+w=P['sf_cmb']
+
+
+
+
+
+
+
+
+
+
+
+tot_dur=0
+tot_dur2=0
+#st=time.clock()
+
+for gen in range(MaxGen):
+
+    C={}
+    C['w']=np.zeros((nGM, nPop))
+    C['CF_0']=np.full((1, nPop),np.inf)
+    C['CF_1']=np.full((1, nPop),np.inf)
+    C['Par_F']=np.full((1, nPop),np.inf)
+    C['Par_CR']=np.full((1, nPop),np.inf)
+    st=time.clock()
+
+    for x in range(nPop):
+        rand_1=random.uniform(0,1)
+        rand_2=random.uniform(0,1)
+        rand_3=random.uniform(0,1)
+        rand_4=random.uniform(0,1)
+        
+        ## Mutation (DE/rand/1 for now) ##
+        #Xr=random.sample([i for i in range(0,nPop) if i != x],3)
+        ans=list(range(0,nPop))
+        ans.remove(x)
+        Xr=random.sample(ans,3)
+        if rand_2<tau_1:
+            u_F=F_l+rand_1*F_u
+        else:
+            u_F=P['Par_F'][cmb,x]
+        
+        u=w[:,Xr[0]]+u_F*(w[:,Xr[1]]-w[:,Xr[2]])   #DE/rand/1
+        
+        # enforce constraints in individual values
+        case=u>Max_sf_ind[comb]
+        u[case]=Max_sf_ind[comb[np.where(case)]]
+        case=u<Min_sf_ind[comb]
+        u[case]=Min_sf_ind[comb[np.where(case)]]
+        
+        ## Crossover ##
+        if rand_4<tau_2:
+            u_CR=rand_3
+        else:
+            u_CR=P['Par_CR'][cmb,x]
+        
+        case_01=random.randint(0, len(u)-1)
+        for k in range(len(u)):
+            case_02=random.uniform(0,1)<=u_CR
+            if not (case_01==k or case_02):
+                u[k]=w[k,x]
+        u.shape=(nGM,1)
+        
+        # Domination check
+        u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+        u_c_02=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u)/len(u)))**2/(len(u)-1))/len(u))**0.5
+        
+        case=two_obj_dominance(P['CF_0'][cmb,x],P['CF_1'][cmb,x],u_c_01,u_c_02,cond)
+        
+        if case==1:
+            w[:,x]=u[:,0]     # DEMO
+            P['CF_0'][cmb,x]=u_c_01
+            P['CF_1'][cmb,x]=u_c_02
+            P['Par_F'][cmb,x]=u_F
+            P['Par_CR'][cmb,x]=u_CR
+        elif case==2:
+            C['w'][:,x]=u[:,0]
+            C['CF_0'][0,x]=u_c_01
+            C['CF_1'][0,x]=u_c_02
+            C['Par_F'][0,x]=u_F
+            C['Par_CR'][0,x]=u_CR
+    end=time.clock()
+    dur=end-st
+    tot_dur=tot_dur+dur
+    
+    st2=time.clock()
+    # combine parent and offspring populations
+    R={}
+    case=C['CF_0']!=np.inf
+    for key in [ v for v in C if v != 'w' ]:
+        R[key]=np.concatenate((P[key][cmb,:],C[key][case]),axis=0)
+    R['w']=np.concatenate((w,C['w'][:,np.where(case)[1]]),axis=1)
+    end2=time.clock()
+
+    # NSGAII - sort and truncate
+    F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
+    P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
+    
+    # form next generation population
+    for key in [ v for v in C if v != 'w' ]:
+        P[key][cmb,:]=R[key][P_n]
+    w=R['w'][:,P_n]
+    
+    
+    
+    dur2=end2-st2
+    tot_dur2=tot_dur2+dur2
+    
+    fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+np.savetxt(fileName, w,formats['fmt_sf'])
+
+#end=time.clock()
+#dur=end-st
+#tot_dur=tot_dur+dur
+
+
+print('\n')
+print(tot_dur)
+
+print('\n')
+print(tot_dur2)
+
+
+
+tot_dur=0
+tot_dur2=0
+#st=time.clock()
+
+for gen in range(MaxGen):
+
+    C={}
+    C['w']=np.zeros((nGM, nPop))
+    C['CF_0']=np.full((1, nPop),np.inf)
+    C['CF_1']=np.full((1, nPop),np.inf)
+    C['Par_F']=np.full((1, nPop),np.inf)
+    C['Par_CR']=np.full((1, nPop),np.inf)
+    st=time.clock()
+
+    for x in range(nPop):
+        rand_1=random.uniform(0,1)
+        rand_2=random.uniform(0,1)
+        rand_3=random.uniform(0,1)
+        rand_4=random.uniform(0,1)
+        
+        ## Mutation (DE/rand/1 for now) ##
+        #Xr=random.sample([i for i in range(0,nPop) if i != x],3)
+        ans=list(range(0,nPop))
+        ans.remove(x)
+        Xr=random.sample(ans,3)
+        if rand_2<tau_1:
+            u_F=F_l+rand_1*F_u
+        else:
+            u_F=P['Par_F'][cmb,x]
+        
+        u=w[:,Xr[0]]+u_F*(w[:,Xr[1]]-w[:,Xr[2]])   #DE/rand/1
+        
+        # enforce constraints in individual values
+        case=u>Max_sf_ind[comb]
+        u[case]=Max_sf_ind[comb[np.where(case)]]
+        case=u<Min_sf_ind[comb]
+        u[case]=Min_sf_ind[comb[np.where(case)]]
+        
+        ## Crossover ##
+        if rand_4<tau_2:
+            u_CR=rand_3
+        else:
+            u_CR=P['Par_CR'][cmb,x]
+        
+        case_01=random.randint(0, len(u)-1)
+        for k in range(len(u)):
+            case_02=random.uniform(0,1)<=u_CR
+            if not (case_01==k or case_02):
+                u[k]=w[k,x]
+        u.shape=(nGM,1)
+        
+        # Domination check
+        u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+        u_c_02=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u)/len(u)))**2/(len(u)-1))/len(u))**0.5
+        
+        case=two_obj_dominance(P['CF_0'][cmb,x],P['CF_1'][cmb,x],u_c_01,u_c_02,cond)
+        
+        if case==1:
+            w[:,x]=u[:,0]     # DEMO
+            P['CF_0'][cmb,x]=u_c_01
+            P['CF_1'][cmb,x]=u_c_02
+            P['Par_F'][cmb,x]=u_F
+            P['Par_CR'][cmb,x]=u_CR
+        elif case==2:
+            C['w'][:,x]=u[:,0]
+            C['CF_0'][0,x]=u_c_01
+            C['CF_1'][0,x]=u_c_02
+            C['Par_F'][0,x]=u_F
+            C['Par_CR'][0,x]=u_CR
+    end=time.clock()
+    dur=end-st
+    tot_dur=tot_dur+dur
+    
+    # combine parent and offspring populations
+    R={}
+    case=C['CF_0']!=np.inf
+    for key in [ v for v in C if v != 'w' ]:
+        R[key]=np.concatenate((P[key][cmb,:],C[key][case]),axis=0)
+    R['w']=np.concatenate((w,C['w'][:,np.where(case)[1]]),axis=1)
+    
+
+    # NSGAII - sort and truncate
+    st2=time.clock()
+
+    F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
+#
+    end2=time.clock()
+    dur2=end2-st2
+    print(dur2)
+    tot_dur2=tot_dur2+dur2
+    
+    
+    
+
+    
+    P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
+    
+    # form next generation population
+    for key in [ v for v in C if v != 'w' ]:
+        P[key][cmb,:]=R[key][P_n]
+    w=R['w'][:,P_n]
+    
+    
+    
+
+    
+    fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+np.savetxt(fileName, w,formats['fmt_sf'])
+
+#end=time.clock()
+#dur=end-st
+#tot_dur=tot_dur+dur
+
+
+print('\n')
+print(tot_dur)
+
+print('\n')
+print(tot_dur2)
+
+st2=time.clock()
+end2=time.clock()
+dur2=end2-st2
+print(dur2)
+tot_dur2=tot_dur2+dur2
+
+
+%load_ext line_profiler
+load_ext line_profiler
+
+F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
+
+
+def fast_non_dominated_sorting():
+    global R
+    global cond
+    Cost_1=R['CF_0']
+    Cost_2=R['CF_1']
+    cond2=cond
+    
+    nPop_n=len(Cost_1)
+    F={}
+    F[1]=[]
+    S={}
+    n={}
+    for p in range(nPop_n):
+        S[p]=[]
+        n[p]=0
+        for q in range(nPop_n):
+            if p==q:
+                continue
+            case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond2)
+            if case==0:
+                S[p].append(q)
+            elif case==1:
+                n[p]=n[p]+1
+        if n[p]==0:
+            F[1].append(p)
+    
+    i=1
+    while F[i]:
+        Q=[]
+        for p in F[i]:
+            for q in S[p]:
+                n[q]=n[q]-1
+                if n[q]==0:
+                    Q.append(q)
+        i=i+1
+        F[i]=Q
+    del F[i]
+    return F
+
+def fast_non_dominated_sorting():
+    global R
+    global cond
+    Cost_1=R['CF_0']
+    Cost_2=R['CF_1']
+    cond2=cond
+    
+    nPop_n=len(Cost_1)
+    F={}
+    F[1]=[]
+    S={}
+    n={}
+    for p in range(nPop_n):
+        S[p]=[]
+        n[p]=0
+        for q in range(nPop_n):
+            if p==q:
+                continue
+            p_obj_01=Cost_1[p]
+            p_obj_02=Cost_2[p]
+            q_obj_01=Cost_1[q]
+            q_obj_02=Cost_2[q]
+            case_011=((p_obj_01<q_obj_01)and(p_obj_02<=q_obj_02))
+            case_012=((p_obj_01<=q_obj_01)and(p_obj_02<q_obj_02))
+            case_021=((p_obj_01>q_obj_01)and(p_obj_02>=q_obj_02))
+            case_022=((p_obj_01>=q_obj_01)and(p_obj_02>q_obj_02))
             
-            fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-            np.savetxt(fileName, P['sf_cmb'],formats['fmt_sf'])
+            case_01=case_011 or case_012
+            case_02=case_021 or case_022
+                        
+            if case_01:
+                case=0    # p dominates q
+            elif case_02:
+                case=1    # q dominates p
+            else:
+                case=2    # nondominated
+
+            if case==0:
+                S[p].append(q)
+            elif case==1:
+                n[p]=n[p]+1
+        if n[p]==0:
+            F[1].append(p)
+    
+    i=1
+    while F[i]:
+        Q=[]
+        for p in F[i]:
+            for q in S[p]:
+                n[q]=n[q]-1
+                if n[q]==0:
+                    Q.append(q)
+        i=i+1
+        F[i]=Q
+    del F[i]
+    return F
+
+%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting()
+
+p_obj_01=Cost_1[p]
+p_obj_02=Cost_2[p]
+q_obj_01=Cost_1[q]
+q_obj_02=Cost_2[q]
+case_01=((p_obj_01<q_obj_01)and(p_obj_02<=q_obj_02))or((p_obj_01<=q_obj_01)and(p_obj_02<q_obj_02))
+case_02=((p_obj_01>q_obj_01)and(p_obj_02>=q_obj_02))or((p_obj_01>=q_obj_01)and(p_obj_02>q_obj_02))
+if cond2=='min':
+    if case_01:
+        case=0    # p dominates q
+    elif case_02:
+        case=1    # q dominates p
+    else:
+        case=2    # nondominated
+elif cond2=='max':
+    if case_01:
+        case=1    # q dominates p
+    elif case_02:
+        case=0    # p dominates q
+    else:
+        case=2    # nondominated
+
+
+
+
+
+import line_profiler
+
+rep=100
+tot_dur2=0
+tot_dur=0
+for rrrr in range(5):
+    st=time.clock()
+    for i in range(rep):
         
-        fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        np.savetxt(fileName, P['Par_F'],formats['fmt_Par_F_CR'])
-        fileName=folders['Par_CR']+'\Par_CR_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        np.savetxt(fileName, P['Par_CR'],formats['fmt_Par_F_CR'])
-        fileName=folders['CF_0']+'\CF_0_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        np.savetxt(fileName, P['CF_0'],formats['fmt_Cost'])
-        fileName=folders['CF_1']+'\CF_1_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
-        np.savetxt(fileName, P['CF_1'],formats['fmt_Cost'])
+#        F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
         
-        index_spl=index_spl+1
-        index=split_end
+        st2=time.clock()
+        nPop_n=len(Cost_1)
+        F={}
+        F[1]=[]
+        S={}
+        n={}
+        for p in range(nPop_n):
+            S[p]=[]
+            n[p]=0
+            for q in range(nPop_n):
+                if p==q:
+                    continue
+                case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
+                if case==0:
+                    S[p].append(q)
+                elif case==1:
+                    n[p]=n[p]+1
+            if n[p]==0:
+                F[1].append(p)
+                
+        end2=time.clock()
+        dur2=end2-st2
+        tot_dur2=tot_dur2+dur2
+        
+        
+        i=1
+        while F[i]:
+            Q=[]
+            for p in F[i]:
+                for q in S[p]:
+                    n[q]=n[q]-1
+                    if n[q]==0:
+                        Q.append(q)
+            i=i+1
+            F[i]=Q
+        del F[i]
+
+        
+    end=time.clock()
+    dur=end-st
+    tot_dur=tot_dur+dur
+    print(dur)
+    
+print('\n')
+print(tot_dur/5)
+
+print('\n')
+print(tot_dur2)
+
+
+
+
+nPop_n=len(Cost_1)
+F={}
+F[1]=[]
+S={}
+n={}
+for p in range(nPop_n):
+    S[p]=[]
+    n[p]=0
+    for q in range(nPop_n):
+        if p==q:
+            continue
+        case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
+        if case==0:
+            S[p].append(q)
+        elif case==1:
+            n[p]=n[p]+1
+    if n[p]==0:
+        F[1].append(p)
+
+i=1
+while F[i]:
+    Q=[]
+    for p in F[i]:
+        for q in S[p]:
+            n[q]=n[q]-1
+            if n[q]==0:
+                Q.append(q)
+    i=i+1
+    F[i]=Q
+del F[i]
+
+
+
+
+
+
+
+
+
+
+
+
+    st2=time.clock()
+
+    F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
+
+    end2=time.clock()
+    dur2=end2-st2
+    print(dur2)
+    tot_dur2=tot_dur2+dur2
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
