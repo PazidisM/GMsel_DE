@@ -412,8 +412,6 @@ print(dur2)
 tot_dur2=tot_dur2+dur2
 
 
-%load_ext line_profiler
-load_ext line_profiler
 
 F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
 
@@ -514,7 +512,192 @@ def fast_non_dominated_sorting():
     del F[i]
     return F
 
-%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting()
+%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(C1,C2,cond)
+%lprun -f jDE jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+%lprun -f two_obj_dominance two_obj_dominance(p1,p2,q1,q2,cond)
+
+fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
+C1=R['CF_0']
+C2=R['CF_1']
+
+%load_ext line_profiler
+load_ext line_profiler
+p1=R['CF_0'][0]
+p2=R['CF_1'][0]
+q1=R['CF_0'][1]
+q2=R['CF_1'][1]
+
+
+
+def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
+    case_01=((p_obj_01<q_obj_01)and(p_obj_02<=q_obj_02))or((p_obj_01<=q_obj_01)and(p_obj_02<q_obj_02))
+    case_02=((p_obj_01>q_obj_01)and(p_obj_02>=q_obj_02))or((p_obj_01>=q_obj_01)and(p_obj_02>q_obj_02))
+    if cond=='min':
+        if case_01:
+            case=0    # p dominates q
+        elif case_02:
+            case=1    # q dominates p
+        else:
+            case=2    # nondominated
+    elif cond=='max':
+        if case_01:
+            case=1    # q dominates p
+        elif case_02:
+            case=0    # p dominates q
+        else:
+            case=2    # nondominated
+    return case
+
+
+
+def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
+    
+    case_01=False
+    case_02=False
+    if (p_obj_01<q_obj_01):
+        if (p_obj_02<=q_obj_02):
+            case_01=True
+        else:
+            case_01=False
+            case_02=False
+    elif (p_obj_01<=q_obj_01):
+        if (p_obj_02<q_obj_02):
+            case_01=True
+        else:
+            case_01=False
+            case_02=False
+    elif (p_obj_01>q_obj_01):
+        if (p_obj_02>=q_obj_02):
+            case_02=True
+        else:
+            case_01=False
+            case_02=False
+    elif (p_obj_01>=q_obj_01):
+        if (p_obj_02>q_obj_02):
+            case_02=True
+        else:
+            case_01=False
+            case_02=False
+    
+    if case_01:
+        case=0    # p dominates q
+    elif case_02:
+        case=1    # q dominates p
+    else:
+        case=2    # nondominated
+    
+    return case
+
+
+def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
+    
+    case_01=False
+    case_02=False
+    if (q_obj_01>p_obj_01):
+        if (p_obj_02<=q_obj_02):
+            case_01=True
+        else:
+            case_01=False
+            case_02=False
+    elif (p_obj_01<=q_obj_01):
+        if (p_obj_02<q_obj_02):
+            case_01=True
+        else:
+            case_01=False
+            case_02=False
+    elif (p_obj_01>q_obj_01):
+        if (p_obj_02>=q_obj_02):
+            case_02=True
+        else:
+            case_01=False
+            case_02=False
+    elif (p_obj_01>=q_obj_01):
+        if (p_obj_02>q_obj_02):
+            case_02=True
+        else:
+            case_01=False
+            case_02=False
+    
+    if case_01:
+        case=0    # p dominates q
+    elif case_02:
+        case=1    # q dominates p
+    else:
+        case=2    # nondominated
+    
+    return case
+
+
+
+
+
+
+
+
+
+fast_non_dominated_sorting(C1,C2,cond)
+
+%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(C1,C2,cond)
+%lprun -f fast_non_dominated_sorting_numbla fast_non_dominated_sorting_numbla(C1,C2,cond)
+
+@jit
+fast_non_dominated_sorting_numbla=jit()(fast_non_dominated_sorting)
+fast_non_dominated_sorting_numbla(C1,C2,cond)
+
+
+def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
+    nPop_n=len(Cost_1)
+    F={}
+    F[1]=[]
+    S={}
+    n={}
+    for p in range(nPop_n):
+        S[p]=[]
+        n[p]=0
+        for q in range(nPop_n):
+            if p==q:
+                continue
+            case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
+            if case==0:
+                S[p].append(q)
+            elif case==1:
+                n[p]=n[p]+1
+        if n[p]==0:
+            F[1].append(p)
+    
+    i=1
+    while F[i]:
+        Q=[]
+        for p in F[i]:
+            for q in S[p]:
+                n[q]=n[q]-1
+                if n[q]==0:
+                    Q.append(q)
+        i=i+1
+        F[i]=Q
+    del F[i]
+    return F
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 p_obj_01=Cost_1[p]
 p_obj_02=Cost_2[p]
@@ -604,67 +787,50 @@ print(tot_dur2)
 
 
 
-nPop_n=len(Cost_1)
-F={}
-F[1]=[]
-S={}
-n={}
-for p in range(nPop_n):
-    S[p]=[]
-    n[p]=0
-    for q in range(nPop_n):
-        if p==q:
-            continue
-        case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
-        if case==0:
-            S[p].append(q)
-        elif case==1:
-            n[p]=n[p]+1
-    if n[p]==0:
-        F[1].append(p)
+rep=100
+tot_dur=0
+st=time.clock()
+for i in range(rep):
+    #fast_non_dominated_sorting(C1,C2,cond)
+    fast_non_dominated_sorting_numbla(C1,C2,cond)
+end=time.clock()
+dur=end-st
+print(dur)
 
-i=1
-while F[i]:
-    Q=[]
-    for p in F[i]:
-        for q in S[p]:
-            n[q]=n[q]-1
-            if n[q]==0:
-                Q.append(q)
-    i=i+1
-    F[i]=Q
-del F[i]
+
+%lprun -f two_obj_dominance two_obj_dominance(p1,p2,q1,q2,cond)
+
+import time
 
 
 
+two_obj_dominance_numbla=jit(two_obj_dominance)
 
+DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
+st=time.clock()
+for i in range(rep):
 
+    #two_obj_dominance(p1,p2,q1,q2,cond)
+    #two_obj_dominance_numbla(p1,p2,q1,q2,cond)
+    #fast_non_dominated_sorting(C1,C2,cond)
+    fast_non_dominated_sorting_numbla(C1,C2,cond)
+#DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+#jDE_numbla(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
+end=time.clock()
+dur=end-st
+print(dur)
 
+fast_non_dominated_sorting(C1,C2,cond)
+fast_non_dominated_sorting_numbla(C1,C2,cond)
 
+%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(C1,C2,cond)
+%lprun -f fast_non_dominated_sorting_numbla fast_non_dominated_sorting_numbla(C1,C2,cond)
 
-
-
-    st2=time.clock()
-
-    F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
-
-    end2=time.clock()
-    dur2=end2-st2
-    print(dur2)
-    tot_dur2=tot_dur2+dur2
-    
-    
-
-
-
-
-
-
-
-
-
+@jit
+fast_non_dominated_sorting_numbla=jit(fast_non_dominated_sorting)
+fast_non_dominated_sorting_numbla(C1,C2,cond)
 
 
 

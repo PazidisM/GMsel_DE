@@ -145,8 +145,8 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
         fileName=folders['CF_1']+'\CF_1_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
         P['CF_1']=np.loadtxt(fileName)
         
-        for cmb in tqdm(range(split_end-split_start),miniters =int((split_end-split_start)*0.05),desc='% of batch',maxinterval=3600):
-        #for cmb in range(split_end-split_start):
+#        for cmb in tqdm(range(split_end-split_start),miniters =int((split_end-split_start)*0.05),desc='% of batch',maxinterval=3600):
+        for cmb in range(split_end-split_start):
             comb=Combs_split[cmb]
             fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
             w=np.loadtxt(fileName)

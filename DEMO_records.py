@@ -4,8 +4,9 @@ Created on Sat Sep  1 22:08:10 2018
 
 @author: Marios D. Pazidis
 """
-
+#!/usr/bin/env pypy
 #%reset -f
+from numba import jit
 from time import time
 import Database_functions
 import Split_functions
