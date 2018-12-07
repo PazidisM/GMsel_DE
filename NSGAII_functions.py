@@ -6,6 +6,7 @@ Created on Wed Nov 21 15:56:04 2018
 """
 
 import numpy as np
+import numba
 
 def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
     case_01=((p_obj_01<q_obj_01)&(p_obj_02<=q_obj_02))|((p_obj_01<=q_obj_01)&(p_obj_02<q_obj_02))
@@ -26,36 +27,94 @@ def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
             case=2    # nondominated
     return case
 
+#def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
+#    nPop_n=len(Cost_1)
+#    F={}
+#    F[1]=[]
+#    S={}
+#    n={}
+#    for p in range(nPop_n):
+#        S[p]=[]
+#        n[p]=0
+#        for q in range(nPop_n):
+#            if p==q:
+#                continue
+#            case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
+#            if case==0:
+#                S[p].append(q)
+#            elif case==1:
+#                n[p]=n[p]+1
+#        if n[p]==0:
+#            F[1].append(p)
+#    
+#    i=1
+#    while F[i]:
+#        Q=[]
+#        for p in F[i]:
+#            for q in S[p]:
+#                n[q]=n[q]-1
+#                if n[q]==0:
+#                    Q.append(q)
+#        i=i+1
+#        F[i]=Q
+#    del F[i]
+#    return F
+
+@numba.jit(nopython=True, parallel=True)
 def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
     nPop_n=len(Cost_1)
-    F={}
-    F[1]=[]
-    S={}
-    n={}
+    F=[]
+    F.append(np.empty(0))
+    S=[]
+    n=[]
     for p in range(nPop_n):
-        S[p]=[]
-        n[p]=0
+        S.append(np.empty(0))
+        n.append(np.zeros(1))
         for q in range(nPop_n):
             if p==q:
                 continue
-            case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
+            case_01=False
+            case_02=False
+            if (Cost_1[int(q)]>Cost_1[int(p)]):
+                if (Cost_2[int(p)]<=Cost_2[int(q)]):
+                    case_01=True
+            elif (Cost_1[int(p)]<=Cost_1[int(q)]):
+                if (Cost_2[int(p)]<Cost_2[int(q)]):
+                    case_01=True
+            elif (Cost_1[int(p)]>Cost_1[int(q)]):
+                if (Cost_2[int(p)]>=Cost_2[int(q)]):
+                    case_02=True
+            elif (Cost_1[int(p)]>=Cost_1[int(q)]):
+                if (Cost_2[int(p)]>Cost_2[int(q)]):
+                    case_02=True
+                    
+            if case_01:
+                case=0    # p dominates q
+            elif case_02:
+                case=1    # q dominates p
+            else:
+                case=2    # nondominated
+            
             if case==0:
-                S[p].append(q)
+                S[int(p)]=np.concatenate((S[int(p)],np.atleast_1d(np.array(int(q)))),0)
             elif case==1:
-                n[p]=n[p]+1
-        if n[p]==0:
-            F[1].append(p)
+                n[int(p)]=n[int(p)]+1
+        
+        foo= ~np.any(n[int(p)])
+        if foo:
+            F[0]=np.concatenate((F[0],np.atleast_1d(np.array(int(p)))),0)
     
-    i=1
-    while F[i]:
-        Q=[]
+    i=0
+    while F[i].size!=0:
+        Q=np.empty(0)
         for p in F[i]:
-            for q in S[p]:
-                n[q]=n[q]-1
-                if n[q]==0:
-                    Q.append(q)
+            for q in S[int(p)]:
+                n[int(q)]=n[int(q)]-1
+                foo= ~np.any(n[int(q)])
+                if foo:
+                    Q=np.concatenate((Q,np.atleast_1d(np.array(int(q)))),0)
         i=i+1
-        F[i]=Q
+        F.append(Q)
     del F[i]
     return F
 

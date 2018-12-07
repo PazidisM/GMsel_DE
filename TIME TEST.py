@@ -520,7 +520,6 @@ fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
 C1=R['CF_0']
 C2=R['CF_1']
 
-%load_ext line_profiler
 load_ext line_profiler
 p1=R['CF_0'][0]
 p2=R['CF_1'][0]
@@ -588,44 +587,6 @@ def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
     
     return case
 
-
-def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
-    
-    case_01=False
-    case_02=False
-    if (q_obj_01>p_obj_01):
-        if (p_obj_02<=q_obj_02):
-            case_01=True
-        else:
-            case_01=False
-            case_02=False
-    elif (p_obj_01<=q_obj_01):
-        if (p_obj_02<q_obj_02):
-            case_01=True
-        else:
-            case_01=False
-            case_02=False
-    elif (p_obj_01>q_obj_01):
-        if (p_obj_02>=q_obj_02):
-            case_02=True
-        else:
-            case_01=False
-            case_02=False
-    elif (p_obj_01>=q_obj_01):
-        if (p_obj_02>q_obj_02):
-            case_02=True
-        else:
-            case_01=False
-            case_02=False
-    
-    if case_01:
-        case=0    # p dominates q
-    elif case_02:
-        case=1    # q dominates p
-    else:
-        case=2    # nondominated
-    
-    return case
 
 
 
@@ -699,10 +660,6 @@ def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
 
 
 
-p_obj_01=Cost_1[p]
-p_obj_02=Cost_2[p]
-q_obj_01=Cost_1[q]
-q_obj_02=Cost_2[q]
 case_01=((p_obj_01<q_obj_01)and(p_obj_02<=q_obj_02))or((p_obj_01<=q_obj_01)and(p_obj_02<q_obj_02))
 case_02=((p_obj_01>q_obj_01)and(p_obj_02>=q_obj_02))or((p_obj_01>=q_obj_01)and(p_obj_02>q_obj_02))
 if cond2=='min':
@@ -724,7 +681,6 @@ elif cond2=='max':
 
 
 
-import line_profiler
 
 rep=100
 tot_dur2=0
@@ -822,18 +778,265 @@ end=time.clock()
 dur=end-st
 print(dur)
 
-fast_non_dominated_sorting(C1,C2,cond)
-fast_non_dominated_sorting_numbla(C1,C2,cond)
 
-%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(C1,C2,cond)
-%lprun -f fast_non_dominated_sorting_numbla fast_non_dominated_sorting_numbla(C1,C2,cond)
+@numba.jit(nopython=True)
+def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
+    nPop_n=len(Cost_1)
+    F={}
+    F[1]=np.empty(0)
+    S={}
+    n={}
+    for p in range(nPop_n):
+        S[p]=np.empty(0)
+        n[p]=0
+        for q in range(nPop_n):
+            if p==q:
+                continue
+            #case=two_obj_dominance(Cost_1[p],Cost_2[p],Cost_1[q],Cost_2[q],cond)
+            case_01=False
+            case_02=False
+            if (Cost_1[q]>Cost_1[p]):
+                if (Cost_2[p]<=Cost_2[q]):
+                    case_01=True
+            elif (Cost_1[p]<=Cost_1[q]):
+                if (Cost_2[p]<Cost_2[q]):
+                    case_01=True
+            elif (Cost_1[p]>Cost_1[q]):
+                if (Cost_2[p]>=Cost_2[q]):
+                    case_02=True
+            elif (Cost_1[p]>=Cost_1[q]):
+                if (Cost_2[p]>Cost_2[q]):
+                    case_02=True
+                    
+            if case_01:
+                case=0    # p dominates q
+            elif case_02:
+                case=1    # q dominates p
+            else:
+                case=2    # nondominated
+            
+            if case==0:
+                S[p]=np.append(S[p],q)
+            elif case==1:
+                n[p]=n[p]+1
+        if n[p]==0:
+            F[1]=np.append(F[1],p)
+    
+    i=1
+    while F[i].size!=0:
+        Q=np.empty(0)
+        for p in F[i]:
+            for q in S[p]:
+                n[q]=n[q]-1
+                if n[q]==0:
+                    Q=np.append(Q,q)
+        i=i+1
+        F[i]=Q
+    del F[i]
+    return F
 
-@jit
-fast_non_dominated_sorting_numbla=jit(fast_non_dominated_sorting)
-fast_non_dominated_sorting_numbla(C1,C2,cond)
+
+@numba.jit(nopython=True, parallel=True)
+def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
+    nPop_n=len(Cost_1)
+    F=[]
+    F.append(np.empty(0))
+    S=[]
+    n=[]
+    for p in range(nPop_n):
+        S.append(np.empty(0))
+        n.append(np.zeros(1))
+        for q in range(nPop_n):
+            if p==q:
+                continue
+            case_01=False
+            case_02=False
+            if (Cost_1[int(q)]>Cost_1[int(p)]):
+                if (Cost_2[int(p)]<=Cost_2[int(q)]):
+                    case_01=True
+            elif (Cost_1[int(p)]<=Cost_1[int(q)]):
+                if (Cost_2[int(p)]<Cost_2[int(q)]):
+                    case_01=True
+            elif (Cost_1[int(p)]>Cost_1[int(q)]):
+                if (Cost_2[int(p)]>=Cost_2[int(q)]):
+                    case_02=True
+            elif (Cost_1[int(p)]>=Cost_1[int(q)]):
+                if (Cost_2[int(p)]>Cost_2[int(q)]):
+                    case_02=True
+                    
+            if case_01:
+                case=0    # p dominates q
+            elif case_02:
+                case=1    # q dominates p
+            else:
+                case=2    # nondominated
+            
+            if case==0:
+                S[int(p)]=np.concatenate((S[int(p)],np.atleast_1d(np.array(int(q)))),0)
+            elif case==1:
+                n[int(p)]=n[int(p)]+1
+        
+        foo= ~np.any(n[int(p)])
+        if foo:
+            F[0]=np.concatenate((F[0],np.atleast_1d(np.array(int(p)))),0)
+    
+    i=0
+    while F[i].size!=0:
+        Q=np.empty(0)
+        for p in F[i]:
+            for q in S[int(p)]:
+                n[int(q)]=n[int(q)]-1
+                foo= ~np.any(n[int(q)])
+                if foo:
+                    Q=np.concatenate((Q,np.atleast_1d(np.array(int(q)))),0)
+        i=i+1
+        F.append(Q)
+    del F[i]
+    return F
 
 
 
 
+F2={}
+for i in range(len(F)):
+    F2[i+1]=list(F[i].astype(int))
+F2=dict([i for i in range(len(F))],F[i] for i in range(len(F)))
+F2=dict(F)
+
+rep=100
+tot_dur=0
+st=time.clock()
+for i in range(rep):
+   F= fast_non_dominated_sorting(Cost_1,Cost_2,cond)
+end=time.clock()
+dur=end-st
+print(dur)
+
+rep=100
+tot_dur=0
+st=time.clock()
+for i in range(rep):
+   F= fast_non_dominated_sorting_numba(Cost_1,Cost_2,cond)
+end=time.clock()
+dur2=end-st
+print(dur2)
+print(dur2/dur)
 
 
+foo2=foo==True
+foo2=np.array_equal(n[int(p)],np.array(0))
+
+fast_non_dominated_sorting(Cost_1,Cost_2,cond)
+#
+foo= n[int(q)]==0
+
+
+
+Cost_1=R['CF_0']
+Cost_2=R['CF_1']
+R['CF_0'],R['CF_1'],cond
+
+
+import line_profiler
+%load_ext line_profiler
+
+
+ans=np.array(q)
+np.ndim(S[int(p)])
+ans=np.atleast_1d(p)
+
+import cython
+import  pyximport; pyximport.install()
+
+
+from distutils.core import setup
+from Cython.Build import cythonize
+
+setup(ext_modules = cythonize('FNS.pyx'))
+
+
+
+
+$ python setup.py build_ext --inplace
+
+
+
+cython3 --embed -o DE_functions.c DE_functions.py
+
+fast_non_dominated_sorting_numba(Cost_1,Cost_2,cond)
+
+%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(Cost_1,Cost_2,cond)
+
+%lprun -f jDE jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+
+
+
+%lprun -f jDE_numba jDE_numba(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+
+
+
+%lprun -f fast_non_dominated_sorting_numba fast_non_dominated_sorting_numba(Cost_1,Cost_2,cond)
+
+
+%lprun -f two_obj_dominance two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
+
+@numba.jit(nopython=True)
+
+fast_non_dominated_sorting_numba=numba.jit(fast_non_dominated_sorting)
+fast_non_dominated_sorting_numba=numba.cfunc(fast_non_dominated_sorting)
+
+@numba.vectorize(nopython=True)
+
+two_obj_dominance_numba=numba.jit(two_obj_dominance)
+jDE_numba=numba.jit(jDE)
+
+jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+
+
+
+
+rep=1000000
+tot_dur=0
+st=time.clock()
+for i in range(rep):
+    #two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
+    two_obj_dominance_numba(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
+
+end=time.clock()
+dur=end-st
+print(dur)
+
+
+p_obj_01=Cost_1[1]
+p_obj_02=Cost_2[1]
+q_obj_01=Cost_1[2]
+q_obj_02=Cost_2[2]
+
+def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
+    
+    case_01=False
+    case_02=False
+    if (q_obj_01>p_obj_01):
+        if (p_obj_02<=q_obj_02):
+            case_01=True
+    elif (p_obj_01<=q_obj_01):
+        if (p_obj_02<q_obj_02):
+            case_01=True
+    elif (p_obj_01>q_obj_01):
+        if (p_obj_02>=q_obj_02):
+            case_02=True
+    elif (p_obj_01>=q_obj_01):
+        if (p_obj_02>q_obj_02):
+            case_02=True
+
+    
+    if case_01:
+        case=0    # p dominates q
+    elif case_02:
+        case=1    # q dominates p
+    else:
+        case=2    # nondominated
+    
+    return case
+
+NSeed=1
