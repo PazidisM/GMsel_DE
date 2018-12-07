@@ -10,7 +10,7 @@ from time import time
 import Database_functions
 import Split_functions
 import folder_fmt_functions
-#import DE_functions
+import DE_functions
 import UIn
 
 start_time=time()
@@ -48,16 +48,16 @@ del Combs, Sa_unsc_ave
 #################################   DE    #################################
 #'''
 #
-### Initialize populations
-#DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
-#end_time=time()
-#dur=end_time-start_time
-#print(dur)
-#
-#start_time=time()
-#
-### Differential Evolution
-#DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
-#end_time=time()
-#dur=end_time-start_time
-#print(dur)
+## Initialize populations
+DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+end_time=time()
+dur=end_time-start_time
+print(dur)
+
+start_time=time()
+
+## Differential Evolution
+DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+end_time=time()
+dur=end_time-start_time
+print(dur)

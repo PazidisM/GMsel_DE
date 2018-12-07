@@ -952,30 +952,33 @@ import  pyximport; pyximport.install()
 from distutils.core import setup
 from Cython.Build import cythonize
 
-setup(ext_modules = cythonize('FNS.pyx'))
+setup(name = 'FNS', ext_modules = cythonize('FNS.pyx'))
 
+cython FNS.py -o FNS.c
 
+python setup.py build_ext
 
+python setup.py build_ext --inplace
 
-$ python setup.py build_ext --inplace
-
-
+conda setup.py build_ext --inplace
 
 cython3 --embed -o DE_functions.c DE_functions.py
 
 fast_non_dominated_sorting_numba(Cost_1,Cost_2,cond)
 
-%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(Cost_1,Cost_2,cond)
+%lprun -f FNS FNS(Cost_1,Cost_2,cond)
 
 %lprun -f jDE jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
+
+import FNS
 
 
 %lprun -f jDE_numba jDE_numba(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
 
 
-%lprun -f fast_non_dominated_sorting_numba fast_non_dominated_sorting_numba(Cost_1,Cost_2,cond)
+%lprun -f fast_non_dominated_sorting fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop,cond)
 
 
 %lprun -f two_obj_dominance two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
@@ -993,15 +996,22 @@ jDE_numba=numba.jit(jDE)
 jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
 
+import time
+import DE_functions
 
-
-rep=1000000
+rep=1
 tot_dur=0
 st=time.clock()
 for i in range(rep):
     #two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
-    two_obj_dominance_numba(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
-
+    #two_obj_dominance_numba(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
+    #FNS.fast_non_dominated_sorting(R['CF_0'],R['CF_1'],cond)
+    #fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop,cond)
+    #fast_non_dominated_sorting_numba(R['CF_0'],R['CF_1'],nPop,cond)
+    DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+    
+    
+    
 end=time.clock()
 dur=end-st
 print(dur)
