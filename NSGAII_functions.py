@@ -61,7 +61,7 @@ def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
 #    return F
 
 @numba.jit(nopython=True, parallel=True)
-def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
+def fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond):
     nPop_n=len(Cost_1)
     F=[]
     F.append(np.empty(0))
@@ -103,20 +103,23 @@ def fast_non_dominated_sorting(Cost_1,Cost_2,cond):
         foo= ~np.any(n[int(p)])
         if foo:
             F[0]=np.concatenate((F[0],np.atleast_1d(np.array(int(p)))),0)
-    
-    i=0
-    while F[i].size!=0:
-        Q=np.empty(0)
-        for p in F[i]:
-            for q in S[int(p)]:
-                n[int(q)]=n[int(q)]-1
-                foo= ~np.any(n[int(q)])
-                if foo:
-                    Q=np.concatenate((Q,np.atleast_1d(np.array(int(q)))),0)
-        i=i+1
-        F.append(Q)
-    del F[i]
+    if len(F[0])<nPop:
+        i=0
+        while F[i].size!=0:
+            Q=np.empty(0)
+            for p in F[i]:
+                for q in S[int(p)]:
+                    n[int(q)]=n[int(q)]-1
+                    foo= ~np.any(n[int(q)])
+                    if foo:
+                        Q=np.concatenate((Q,np.atleast_1d(np.array(int(q)))),0)
+            i=i+1
+            F.append(Q)
+        del F[i]
     return F
+
+
+
 
 
 def crowding_distance_assignment(F,Cost_0,Cost_1,nPop):

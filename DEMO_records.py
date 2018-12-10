@@ -6,11 +6,12 @@ Created on Sat Sep  1 22:08:10 2018
 """
 #!/usr/bin/env pypy
 #%reset -f
-from time import time
+import time
 import Database_functions
 import Split_functions
 import folder_fmt_functions
 import DE_functions
+import DE_functions_cython_test
 import UIn
 
 start_time=time()
@@ -54,10 +55,28 @@ end_time=time()
 dur=end_time-start_time
 print(dur)
 
-start_time=time()
 
+start_time=time.clock()
 ## Differential Evolution
+
 DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
-end_time=time()
+#DE_functions_cython_test.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+
+end_time=time.clock()
 dur=end_time-start_time
 print(dur)
+
+
+start_time=time.clock()
+## Differential Evolution
+
+#DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+DE_functions_cython_test.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+
+end_time=time.clock()
+dur2=end_time-start_time
+print(dur2)
+
+print('cython is '+str((dur-dur2)/dur*100 )+'% faster')
+
+

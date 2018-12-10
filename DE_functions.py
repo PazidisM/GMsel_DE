@@ -13,91 +13,9 @@ from tqdm import tqdm
 import random
 #import math
 #import time
-#from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
-from NSGAII_functions import crowding_distance_assignment as crowding_distance_assignment
-
-
-#@numba.jit(nopython=True, parallel=True)
-def fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond):
-    nPop_n=len(Cost_1)
-    F=[]
-    F.append(np.empty(0))
-    S=[]
-    n=[]
-    for p in range(nPop_n):
-        S.append(np.empty(0))
-        n.append(np.zeros(1))
-        for q in range(nPop_n):
-            if p==q:
-                continue
-            case_01=False
-            case_02=False
-            if (Cost_1[int(q)]>Cost_1[int(p)]):
-                if (Cost_2[int(p)]<=Cost_2[int(q)]):
-                    case_01=True
-            elif (Cost_1[int(p)]<=Cost_1[int(q)]):
-                if (Cost_2[int(p)]<Cost_2[int(q)]):
-                    case_01=True
-            elif (Cost_1[int(p)]>Cost_1[int(q)]):
-                if (Cost_2[int(p)]>=Cost_2[int(q)]):
-                    case_02=True
-            elif (Cost_1[int(p)]>=Cost_1[int(q)]):
-                if (Cost_2[int(p)]>Cost_2[int(q)]):
-                    case_02=True
-                    
-            if case_01:
-                case=0    # p dominates q
-            elif case_02:
-                case=1    # q dominates p
-            else:
-                case=2    # nondominated
-            
-            if case==0:
-                S[int(p)]=np.concatenate((S[int(p)],np.atleast_1d(np.array(int(q)))),0)
-            elif case==1:
-                n[int(p)]=n[int(p)]+1
-        
-        foo= ~np.any(n[int(p)])
-        if foo:
-            F[0]=np.concatenate((F[0],np.atleast_1d(np.array(int(p)))),0)
-    if len(F[0])<nPop:
-        i=0
-        while F[i].size!=0:
-            Q=np.empty(0)
-            for p in F[i]:
-                for q in S[int(p)]:
-                    n[int(q)]=n[int(q)]-1
-                    foo= ~np.any(n[int(q)])
-                    if foo:
-                        Q=np.concatenate((Q,np.atleast_1d(np.array(int(q)))),0)
-            i=i+1
-            F.append(Q)
-        del F[i]
-    return F
-
-
-
-
-
-def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
-    case_01=((p_obj_01<q_obj_01)and(p_obj_02<=q_obj_02))or((p_obj_01<=q_obj_01)and(p_obj_02<q_obj_02))
-    case_02=((p_obj_01>q_obj_01)and(p_obj_02>=q_obj_02))or((p_obj_01>=q_obj_01)and(p_obj_02>q_obj_02))
-    if cond=='min':
-        if case_01:
-            case=0    # p dominates q
-        elif case_02:
-            case=1    # q dominates p
-        else:
-            case=2    # nondominated
-    elif cond=='max':
-        if case_01:
-            case=1    # q dominates p
-        elif case_02:
-            case=0    # p dominates q
-        else:
-            case=2    # nondominated
-    return case
-
+from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
+from CDA import crowding_distance_assignment as crowding_distance_assignment
+from TOD import two_obj_dominance as two_obj_dominance
 
 def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
     
@@ -168,7 +86,7 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
         index=split_end
 
 
-
+Max_sf_ind,Max_sf_ind,nGM,nPop,F_l,F_u,tau_1,tau_2,cond,MaxGen,index,P,comb,w,Sa_unsc_ave_suite,Sa_suite
 
 
 def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
@@ -296,7 +214,7 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                 R['w']=np.concatenate((w,C['w'][:,np.where(case)[1]]),axis=1)
                 
                 # NSGAII - sort and truncate
-                F=fast_non_dominated_sorting_numba(R['CF_0'],R['CF_1'],nPop,cond)
+                F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop,cond)
                 F2={}
                 for i in range(len(F)):
                     F2[i+1]=list(F[i].astype(int))
