@@ -143,21 +143,53 @@ def jDE_main_numba(cmb,Sa_Tgt,formats_fmt_sf,formats_fill_fn_all,folders_Scaling
                 C_CF_1[0,x]=u_c_02
                 C_Par_F[0,x]=u_F
                 C_Par_CR[0,x]=u_CR
-            
+        
+        
         # combine parent and offspring populations
-        case3=np.zeros(len(C_CF_0))
-        for ll in range(len(C_CF_0)):
+        case3=np.zeros(C_CF_0.size)
+        for ll in range(C_CF_0.size):
             if C_CF_0[0,ll]!=np.inf:
                 case3[ll]=1
-        C_CF_0[int(case3[:])]
-#        case3=C_CF_0!=np.inf
-#        R_CF_0=np.concatenate((P_CF_0[cmb,:],C_CF_0[case3]),axis=0)
-#        R_CF_1=np.concatenate((P_CF_1[cmb,:],C_CF_1[case3]),axis=0)
-#        R_Par_F=np.concatenate((P_Par_F[cmb,:],C_Par_F[case3]),axis=0)
-#        R_Par_CR=np.concatenate((P_Par_CR[cmb,:],C_Par_CR[case3]),axis=0)
-#        R_w=np.concatenate((w,C_w[:,np.where(case3)[1]]),axis=1)
-#        np.where(case3)
-#        C_w[:,np.where(case3)[1]]
+        if np.any(case3):
+            c3_len=0
+            for lll in range(len(case3)):
+                if case3[lll]==1:
+                    c3_len=c3_len+1
+            C_CF_0_c=np.empty((1,c3_len))
+            C_CF_1_c=np.empty((1,c3_len))
+            C_Par_F_c=np.empty((1,c3_len))
+            C_Par_CR_c=np.empty((1,c3_len))
+            c_idx=0
+            for lll in range(len(case3)):
+                if case3[lll]==1:
+                    C_CF_0_c[c_idx]=C_CF_0[0,lll]
+                    C_CF_1_c[c_idx]=C_CF_1[0,lll]
+                    C_Par_F_c[c_idx]=C_Par_F[0,lll]
+                    C_Par_CR_c[c_idx]=C_Par_CR[0,lll]
+                    c_idx=c_idx+1
+            
+            P_CF_0_c=np.empty((1,nPop))
+            P_CF_1_c=np.empty((1,nPop))
+            P_Par_F_c=np.empty((1,nPop))
+            P_Par_CR_c=np.empty((1,nPop))
+            P_CF_0_c[0,:]=P_CF_0[cmb,:]
+            P_CF_1_c[0,:]=P_CF_1[cmb,:]
+            P_Par_F_c[0,:]=P_Par_F[cmb,:]
+            P_Par_CR_c[0,:]=P_Par_CR[cmb,:]
+#            del(R_CF_0)
+#            R_CF_0=np.stack((P_CF_0_c,C_CF_0_c),axis=1)
+#            R_CF_0=np.concatenate((P_CF_0_c,C_CF_0_c),axis=1)
+#            R_CF_1=np.concatenate((P_CF_1_c,C_CF_1_c),axis=1)
+#            R_Par_F=np.concatenate((P_Par_F_c,C_Par_F_c),axis=1)
+#            R_Par_CR=np.concatenate((P_Par_CR_c,C_Par_CR_c),axis=1)
+#            R_w=np.concatenate((w,C_w[:,np.where(case3)[1]]),axis=1)
+        else:
+            R_CF_0=P_CF_0[cmb,x]
+            R_CF_1=P_CF_1[cmb,x]
+            R_Par_F=P_Par_F[cmb,x]
+            R_Par_CR=P_Par_CR[cmb,x]
+            R_w=w
+
 #        # NSGAII - sort and truncate
 #        F=fast_non_dominated_sorting(R_CF_0,R_CF_1,nPop,cond)
 #        F2={}

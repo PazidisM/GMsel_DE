@@ -6,6 +6,7 @@ Created on Thu Nov 15 14:39:00 2018
 """
 
 import numpy as np
+import numba
 
 # RMSE
 def CF_0(Sa_ave,Sa_Tgt,sf_suite):
@@ -27,3 +28,25 @@ def CF_1(Sa_suite,sf_suite,Sa_ave):
     z=np.sqrt(var_mean)
     
     return z
+
+# RMSE
+#@numba.jit(nopython=True, parallel=True)
+#def CF_0(Sa_unsc_ave_suite,Sa_Tgt,u):
+#    
+#    z=(np.sum((Sa_unsc_ave_suite+np.sum(u[:,0])/len(u)-Sa_Tgt)**2)/Sa_Tgt.size)**0.5
+#    
+#    return z
+#
+## Standard deviation
+#@numba.jit(nopython=True, parallel=True)
+#def CF_1(Sa_suite,u,Sa_unsc_ave_suite):
+#    
+#    z=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u[:,0])/len(u)))**2/(len(u)-1))/len(u))**0.5
+#    
+#    return z
+#
+
+
+
+
+

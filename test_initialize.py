@@ -4,6 +4,70 @@ Created on Mon Dec 10 11:06:13 2018
 
 @author: Marios
 """
+
+
+import UIn
+import Database_functions
+import Split_functions
+import folder_fmt_functions
+import DE_functions
+import DE_functions_cython_test
+#start_time=time()
+
+SaveFolder='C:\Marios\Research\Tests\GM_selection_DEMO\Python\GMsel_DE\TEST'
+folders=folder_fmt_functions.folder_init(SaveFolder)
+selectionParams,allowedRecs,DE_par,split_data=UIn.User_Input()
+'''
+#################################   Database screening / Combinations    #################################
+'''
+
+## screen database & define target spectrum
+Ndatabase, Rec_db_metadata, Sa, Periods=Database_functions.screen_database(selectionParams,allowedRecs)
+Sa_Tgt=Database_functions.EC8_Elastic_Spectrum_Type_1(selectionParams['soiltype'],selectionParams['a_g'],selectionParams['zeta'],Periods['T_all'])
+
+## Define globals for simplicity / truncate arrays
+T=Periods['T_match']
+Sa_Tgt=Sa_Tgt[:,Periods['idx_T_match'][0]]
+Sa=Sa[:,Periods['idx_T_match'][0]]
+
+## Calculate max/min scaling factors and further screen the database
+Sa,Rec_db_metadata,sf_ind, selectionParams, Ndatabase=Database_functions.Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams)
+
+## Calculate combinations / Create GM suites
+Combs, Sa_unsc_ave, NSeed, split_data=Database_functions.Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,sf_ind)
+
+## Printing formats
+formats=folder_fmt_functions.fmt(SaveFolder,split_data,NSeed,Rec_db_metadata,DE_par)
+
+## Save data to files
+Split_functions.Pre_run_split(split_data,NSeed,Combs,Sa_unsc_ave,folders,formats)
+del Combs, Sa_unsc_ave
+
+'''
+#################################   DE    #################################
+#'''
+#
+
+
+
+## Initialize populations
+DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+#end_time=time()
+#dur=end_time-start_time
+#print(dur)
+
+
+
+
+
+
+
+
+
+
+
+
+
 def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
     case_01=((p_obj_01<q_obj_01)&(p_obj_02<=q_obj_02))|((p_obj_01<=q_obj_01)&(p_obj_02<q_obj_02))
     case_02=((p_obj_01>q_obj_01)&(p_obj_02>=q_obj_02))|((p_obj_01>=q_obj_01)&(p_obj_02>q_obj_02))
@@ -31,8 +95,8 @@ from tqdm import tqdm
 import random
 #import math
 #import time
-from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
-from NSGAII_functions import crowding_distance_assignment as crowding_distance_assignment
+#from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
+#from NSGAII_functions import crowding_distance_assignment as crowding_distance_assignment
 
 split_size=split_data['split_size']
 Max_sf_ind=selectionParams['Max_sf_ind']
@@ -85,6 +149,43 @@ C['CF_0']=np.full((1, nPop),np.inf)
 C['CF_1']=np.full((1, nPop),np.inf)
 C['Par_F']=np.full((1, nPop),np.inf)
 C['Par_CR']=np.full((1, nPop),np.inf)
+
+print('\n')
+print('Optimizing Batch '+str(index_spl)+' of '+str(split_data['split_num']))
+
+split_start=index%split_size+index//split_size*split_size
+split_end=split_start+split_size
+if split_end>NSeed:
+    split_end=NSeed
+
+P={}
+fileName=folders['Combinations']+'\Combs_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+Combs_split=np.loadtxt(fileName).astype(int)
+fileName=folders['Sa_unsc_ave']+'\Sa_unsc_ave_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+Sa_unsc_ave_split=np.loadtxt(fileName)
+fileName=folders['Par_F']+'\Par_F_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+P['Par_F']=np.loadtxt(fileName)
+fileName=folders['Par_CR']+'\Par_CR_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+P['Par_CR']=np.loadtxt(fileName)
+fileName=folders['CF_0']+'\CF_0_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+P['CF_0']=np.loadtxt(fileName)
+fileName=folders['CF_1']+'\CF_1_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
+P['CF_1']=np.loadtxt(fileName)
+
+P_CF_0=P['CF_0']
+P_CF_1=P['CF_1']
+P_Par_F=P['Par_F']
+P_Par_CR=P['Par_CR']
+formats_fmt_sf=formats['fmt_sf']
+formats_fill_fn_all=formats['fill_fn_all']
+folders_Scaling_factors=folders['Scaling_factors']
+
+
+
+
+
+
+
 
 
 for x in range(nPop):

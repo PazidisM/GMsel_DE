@@ -7,14 +7,14 @@ Created on Sat Sep  1 22:08:10 2018
 #!/usr/bin/env pypy
 #%reset -f
 import time
+import UIn
 import Database_functions
 import Split_functions
 import folder_fmt_functions
 import DE_functions
 import DE_functions_cython_test
-import UIn
 
-start_time=time()
+#start_time=time()
 
 SaveFolder='C:\Marios\Research\Tests\GM_selection_DEMO\Python\GMsel_DE\TEST'
 folders=folder_fmt_functions.folder_init(SaveFolder)
@@ -49,11 +49,14 @@ del Combs, Sa_unsc_ave
 #################################   DE    #################################
 #'''
 #
+
+
+
 ## Initialize populations
 DE_functions.Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
-end_time=time()
-dur=end_time-start_time
-print(dur)
+#end_time=time()
+#dur=end_time-start_time
+#print(dur)
 
 
 start_time=time.clock()
@@ -77,6 +80,6 @@ end_time=time.clock()
 dur2=end_time-start_time
 print(dur2)
 
-print('cython is '+str((dur-dur2)/dur*100 )+'% faster')
+print('cython is '+str(dur/dur2*100 )+'% faster')
 
 

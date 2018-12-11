@@ -191,31 +191,43 @@ q_obj_02=R['CF_1'][1]
 
 
 
+from NSGAII_functions import crowding_distance_assignment as crowding_distance_assignment
+
+from CDA import crowding_distance_assignment as crowding_distance_assignment
 
 
-for i in range(4):
-    rep=10
+for i in range(10):
+    rep=1000
     tot_dur=0
     st=time.clock()
     for i in range(rep):
         #F= FNS.fast_non_dominated_sorting(Cost_1,Cost_2,cond)
-        F= fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond)
-       # P_new=crowding_distance_assignment(F,Cost_1,Cost_2,nPop)
+        #F= fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond)
+        P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
     end=time.clock()
     dur=end-st
     print(dur)
 
 
 
-from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
 
+from DE_functions import jDE
+%lprun -f jDE jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+
+
+
+
+from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
+DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
 %load_ext line_profiler
 
-%lprun -f crowding_distance_assignment crowding_distance_assignment(F,Cost_1,Cost_2,nPop)
+%lprun -f jDE_main jDE_main(cmb,Sa_Tgt,formats,folders,Max_sf_ind,Min_sf_ind,nGM,nPop,F_l,F_u,tau_1,tau_2,cond,MaxGen,index,P,comb,w,Sa_unsc_ave_suite,Sa_suite)
+
 
 import line_profiler
 
+jDE_main(cmb,Sa_Tgt,formats,folders,Max_sf_ind,Min_sf_ind,nGM,nPop,F_l,F_u,tau_1,tau_2,cond,MaxGen,index,P,comb,w,Sa_unsc_ave_suite,Sa_suite)
 
 import  pyximport; pyximport.install()
 from distutils.core import setup
@@ -230,6 +242,7 @@ import DE_functions
 import numpy as np
 import numba
 
+P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
 
 # importing the required module 
 import timeit 

@@ -6,7 +6,6 @@ Created on Fri Nov 16 18:53:38 2018
 """
 
 import math
-import numba
 import numpy as np
 import Cost_functions 
 from tqdm import tqdm
@@ -16,6 +15,8 @@ import random
 from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
 from CDA import crowding_distance_assignment as crowding_distance_assignment
 from TOD import two_obj_dominance as two_obj_dominance
+from Cost_functions import CF_0
+from Cost_functions import CF_1
 
 def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
     
@@ -86,11 +87,9 @@ def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tg
         index=split_end
 
 
-Max_sf_ind,Max_sf_ind,nGM,nPop,F_l,F_u,tau_1,tau_2,cond,MaxGen,index,P,comb,w,Sa_unsc_ave_suite,Sa_suite
 
 
 def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
-    fast_non_dominated_sorting_numba=numba.jit(fast_non_dominated_sorting,nopython=True, parallel=True)
 
     split_size=split_data['split_size']
     Max_sf_ind=selectionParams['Max_sf_ind']
@@ -186,11 +185,16 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                         if not (case_01==k or case_02):
                             u[k]=w[k,x]
                     u.shape=(nGM,1)
-                    
+                    u=np.repeat(u, 56,axis=1)
                     # Domination check
-                    u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
-                    u_c_02=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u)/len(u)))**2/(len(u)-1))/len(u))**0.5
+#                    u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+#                    u_c_02=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u)/len(u)))**2/(len(u)-1))/len(u))**0.5
+#                    
+                    u_c_01=CF_0(Sa_unsc_ave_suite,Sa_Tgt,u)
+                    u_c_02=CF_1(Sa_suite,u,Sa_unsc_ave_suite)
                     
+                    u=u[:,0]
+                    u.shape=(nGM,1)
                     case=two_obj_dominance(P['CF_0'][cmb,x],P['CF_1'][cmb,x],u_c_01,u_c_02,cond)
                     
                     if case==1:
