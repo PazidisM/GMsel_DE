@@ -60,8 +60,8 @@ def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
 #    del F[i]
 #    return F
 
-@numba.jit(nopython=True, parallel=True)
-def fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond):
+@numba.jit(nopython=True)
+def fast_non_dominated_sorting(Cost_1,Cost_2,nPop):
     nPop_n=len(Cost_1)
     F=[]
     F.append(np.empty(0))

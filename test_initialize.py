@@ -13,6 +13,11 @@ import folder_fmt_functions
 import DE_functions
 import DE_functions_cython_test
 #start_time=time()
+from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
+from CDA import crowding_distance_assignment as crowding_distance_assignment
+from TOD import two_obj_dominance as two_obj_dominance
+from Cost_functions import CF_0
+from Cost_functions import CF_1
 
 SaveFolder='C:\Marios\Research\Tests\GM_selection_DEMO\Python\GMsel_DE\TEST'
 folders=folder_fmt_functions.folder_init(SaveFolder)
@@ -254,7 +259,7 @@ for key in [ v for v in C if v != 'w' ]:
 R['w']=np.concatenate((w,C['w'][:,np.where(case)[1]]),axis=1)
 
 # NSGAII - sort and truncate
-F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop,cond)
+F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop)
 F2={}
 for i in range(len(F)):
     F2[i+1]=list(F[i].astype(int))

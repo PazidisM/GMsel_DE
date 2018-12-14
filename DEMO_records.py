@@ -70,16 +70,23 @@ dur=end_time-start_time
 print(dur)
 
 
-start_time=time.clock()
-## Differential Evolution
+#start_time=time.clock()
+### Differential Evolution
+#
+##DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+#DE_functions_cython_test.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+#
+#end_time=time.clock()
+#dur2=end_time-start_time
+#print(dur2)
 
-#DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
-DE_functions_cython_test.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
+#print('cython is '+str(dur/dur2*100 )+'% faster')
 
-end_time=time.clock()
-dur2=end_time-start_time
-print(dur2)
 
-print('cython is '+str(dur/dur2*100 )+'% faster')
+
+
+
+
+
 
 

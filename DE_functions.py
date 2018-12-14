@@ -146,6 +146,11 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                 C['Par_F']=np.full((1, nPop),np.inf)
                 C['Par_CR']=np.full((1, nPop),np.inf)
                 
+                
+#                F_l=0.2+0.3*gen/MaxGen;
+#                CR_l=0.05+0.95*gen/MaxGen;
+#                CR_u=1
+                
                 for x in range(nPop):
                     rand_1=random.uniform(0,1)
                     rand_2=random.uniform(0,1)
@@ -159,9 +164,12 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                     Xr=random.sample(foo,3)
                     #Xr=np.random.choice(foo,3)
                     if rand_2<tau_1:
-                        u_F=F_l+rand_1*F_u
+#                        u_F=F_l+rand_1*F_u
+                        u_F=F_l+rand_1*(F_u-F_l)
                     else:
                         u_F=P['Par_F'][cmb,x]
+                    
+#                    u_F=0.6
                     
                     u=w[:,Xr[0]]+u_F*(w[:,Xr[1]]-w[:,Xr[2]])   #DE/rand/1
                     
@@ -173,9 +181,12 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                     
                     ## Crossover ##
                     if rand_4<tau_2:
+#                        u_CR=CR_l+rand_3*(CR_u-CR_l)
                         u_CR=rand_3
                     else:
                         u_CR=P['Par_CR'][cmb,x]
+                    
+#                    u_CR=0.8
                     
                     #case_01=random.randint(0, len(u)-1)
                     case_01=np.random.randint(0, len(u))
@@ -185,16 +196,16 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                         if not (case_01==k or case_02):
                             u[k]=w[k,x]
                     u.shape=(nGM,1)
-                    u=np.repeat(u, 56,axis=1)
+#                    u=np.repeat(u, 56,axis=1)
                     # Domination check
-#                    u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
-#                    u_c_02=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u)/len(u)))**2/(len(u)-1))/len(u))**0.5
-#                    
-                    u_c_01=CF_0(Sa_unsc_ave_suite,Sa_Tgt,u)
-                    u_c_02=CF_1(Sa_suite,u,Sa_unsc_ave_suite)
+                    u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+                    u_c_02=(np.sum((Sa_suite+u-(Sa_unsc_ave_suite+np.sum(u)/len(u)))**2/(len(u)-1))/len(u))**0.5
                     
-                    u=u[:,0]
-                    u.shape=(nGM,1)
+#                    u_c_01=CF_0(Sa_unsc_ave_suite,Sa_Tgt,u)
+#                    u_c_02=CF_1(Sa_suite,u,Sa_unsc_ave_suite)
+#                    
+#                    u=u[:,0]
+#                    u.shape=(nGM,1)
                     case=two_obj_dominance(P['CF_0'][cmb,x],P['CF_1'][cmb,x],u_c_01,u_c_02,cond)
                     
                     if case==1:
@@ -218,7 +229,7 @@ def jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
                 R['w']=np.concatenate((w,C['w'][:,np.where(case)[1]]),axis=1)
                 
                 # NSGAII - sort and truncate
-                F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop,cond)
+                F=fast_non_dominated_sorting(R['CF_0'],R['CF_1'],nPop)
                 F2={}
                 for i in range(len(F)):
                     F2[i+1]=list(F[i].astype(int))

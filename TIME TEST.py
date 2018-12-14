@@ -202,11 +202,40 @@ for i in range(10):
     st=time.clock()
     for i in range(rep):
         #F= FNS.fast_non_dominated_sorting(Cost_1,Cost_2,cond)
-        #F= fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond)
-        P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
+        F= fast_non_dominated_sorting(Cost_1,Cost_2,nPop,cond)
+#        P_n=crowding_distance_assignment(F,R['CF_0'],R['CF_1'],nPop)
     end=time.clock()
     dur=end-st
     print(dur)
+
+
+def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
+    case_01=((p_obj_01<q_obj_01)&(p_obj_02<=q_obj_02))|((p_obj_01<=q_obj_01)&(p_obj_02<q_obj_02))
+    case_02=((p_obj_01>q_obj_01)&(p_obj_02>=q_obj_02))|((p_obj_01>=q_obj_01)&(p_obj_02>q_obj_02))
+    if cond=='min':
+        if case_01:
+            case=0    # p dominates q
+        elif case_02:
+            case=1    # q dominates p
+        else:
+            case=2    # nondominated
+    elif cond=='max':
+        if case_01:
+            case=1    # q dominates p
+        elif case_02:
+            case=0    # p dominates q
+        else:
+            case=2    # nondominated
+    return case
+case
+
+p_obj_01=P['CF_0'][0,0]
+p_obj_02=P['CF_1'][0,0]
+q_obj_01=P['CF_0'][0,1]
+q_obj_02=P['CF_1'][0,1]
+
+case=two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond)
+case
 
 
 
@@ -218,6 +247,8 @@ from DE_functions import jDE
 
 
 from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
+
+
 DE_functions.jDE(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa)
 
 %load_ext line_profiler
