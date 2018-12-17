@@ -16,9 +16,7 @@ index=0
 index_spl=0
 while index<NSeed:
     
-    print('\n')
-    print('Optimizing Batch '+str(index_spl)+' of '+str(split_data['split_num']))
-    
+
     split_start=index%split_size+index//split_size*split_size
     split_end=split_start+split_size
     if split_end>NSeed:
@@ -32,24 +30,25 @@ while index<NSeed:
     
     Dom=np.zeros((split_end-split_start,nPop),dtype=int)
     for cmb in range(split_end-split_start):
-        
-        p=0
-        while p<nPop-1:
-            if Dom[cmb,p]==1:
-                p=p+1
-                continue
-            q=p+1
-            while q<nPop:
-                if Dom[cmb,q]==1:
-                    q=q+1
-                    continue
-                case=two_obj_dominance(P['CF_0'][cmb,p],P['CF_1'][cmb,p],P['CF_0'][cmb,q],P['CF_1'][cmb,q],cond)
-                if case==0:
-                    Dom[cmb,q]=1
-                elif case==1 and Dom[cmb,p]==0:
-                    Dom[cmb,p]=1
-                q=q+1
-            p=p+1
+        fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
+        np.savetxt(fileName, w,formats['fmt_sf'])
+#        p=0
+#        while p<nPop-1:
+#            if Dom[cmb,p]==1:
+#                p=p+1
+#                continue
+#            q=p+1
+#            while q<nPop:
+#                if Dom[cmb,q]==1:
+#                    q=q+1
+#                    continue
+#                case=two_obj_dominance(P['CF_0'][cmb,p],P['CF_1'][cmb,p],P['CF_0'][cmb,q],P['CF_1'][cmb,q],cond)
+#                if case==0:
+#                    Dom[cmb,q]=1
+#                elif case==1 and Dom[cmb,p]==0:
+#                    Dom[cmb,p]=1
+#                q=q+1
+#            p=p+1
 
 
 
@@ -89,7 +88,6 @@ Front=np.column_stack((Front_CF_0,Front_CF_1))
 arr=np.row_stack((foo_r,foo_c))
 
 
-Fr=fast_non_dominated_sorting(P_CF_0,P_CF_1,Dom.size)
 
 foo2=tuple(map(tuple, arr))
 
@@ -103,12 +101,15 @@ Front_CF_1=P['CF_1'][foo2]
 Front=np.column_stack((Front_CF_0,Front_CF_1))
 
 
-Front
+
 
 P_CF_0=np.zeros((62,nPop),dtype=int)
 P_CF_0=P['CF_0'].flatten()
 P_CF_1=np.zeros((62,nPop),dtype=int)
 P_CF_1=P['CF_1'].flatten()
+Fr=fast_non_dominated_sorting(P_CF_0,P_CF_1,Dom.size)
+
+
 
 from matplotlib import pyplot as plt
 
@@ -133,6 +134,15 @@ ax.scatter(x, y,s)
 
 plt.show()
 
+
+
+fig = plt.figure()
+ax = plt.axes()
+
+x = T[0]
+y=Sa_Tgt[0]
+
+plt.plot(x, y);
 
 
 

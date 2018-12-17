@@ -35,13 +35,13 @@ def User_Input():
     sameEventStation=0     # 0: can only contain 1 component per suite, 1: can contain both components
     max_diff_max=6
     max_diff_min=0.25
-    nSeed=1
+    nSeed=2
     
     
     # allowedRecs
-    Vs30=[850, Inf]
+    Vs30=[800, Inf]
     Mag=[5.0, Inf]
-    D=[55, Inf]
+    D=[15, Inf]
     
     # DE parameters
     MaxGen=100

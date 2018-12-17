@@ -119,7 +119,7 @@ def screen_database(selectionParams,allowedRecs):
 
 def EC8_Elastic_Spectrum_Type_1(soiltype_EC8,a_g_EC8,zeta_EC8,periods_EC8):
 
-    eta_EC8 = math.sqrt(10/(5+zeta_EC8*100))
+    eta_EC8 =(10/(5+zeta_EC8*100))**0.5
     
     if soiltype_EC8=='A':
         S=1
