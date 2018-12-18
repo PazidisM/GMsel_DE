@@ -60,6 +60,8 @@ def two_obj_dominance(p_obj_01,p_obj_02,q_obj_01,q_obj_02,cond):
 #    del F[i]
 #    return F
 
+
+
 @numba.jit(nopython=True)
 def fast_non_dominated_sorting(Cost_1,Cost_2,nPop):
     nPop_n=len(Cost_1)
@@ -118,6 +120,67 @@ def fast_non_dominated_sorting(Cost_1,Cost_2,nPop):
         del F[i]
     return F
 
+
+@numba.jit(nopython=True)
+def fast_non_dominated_sorting_first_front(Cost_1,Cost_2,leng,nPop):
+    
+    Dom=np.zeros(leng)
+    p=0
+    while p < leng-1:
+        if Dom[p]==1:
+            p=p+1
+            continue
+        q=p+1
+        while q<leng:
+            if p==q or Dom[q]==1:
+                q=q+1
+                continue
+            case_01=False
+            case_02=False
+            if (Cost_1[int(q)]>Cost_1[int(p)]):
+                if (Cost_2[int(p)]<=Cost_2[int(q)]):
+                    case_01=True
+            elif (Cost_1[int(p)]<=Cost_1[int(q)]):
+                if (Cost_2[int(p)]<Cost_2[int(q)]):
+                    case_01=True
+            elif (Cost_1[int(p)]>Cost_1[int(q)]):
+                if (Cost_2[int(p)]>=Cost_2[int(q)]):
+                    case_02=True
+            elif (Cost_1[int(p)]>=Cost_1[int(q)]):
+                if (Cost_2[int(p)]>Cost_2[int(q)]):
+                    case_02=True
+            
+            if case_01:
+                case=0    # p dominates q
+            elif case_02:
+                case=1    # q dominates p
+            else:
+                case=2    # nondominated
+            
+            if case==0:
+                Dom[int(q)]=1
+            elif case==1:
+                Dom[int(p)]=1
+            q=q+1
+        p=p+1
+        if p%100==0:
+            print(p)
+    foo= ~np.all(Dom[:])
+    if foo:
+        F_t=np.where(Dom==0)
+        print(len(F_t[0]))
+        l=len(F_t[0])
+        Fr=np.zeros((l,2))
+        foo=np.array(F_t)//nPop
+        foo=foo.reshape((len(F_t[0]),1))
+        Fr[:,0]=foo
+#        Fr[:,1]=np.array(F_t)%nPop
+#    else:
+#        Fr=np.empty(0)
+    F=Fr
+    return F
+
+foo=fast_non_dominated_sorting_first_front(P_CF_0,P_CF_1,len(P_CF_0),nPop)
 
 
 

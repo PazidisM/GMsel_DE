@@ -7,6 +7,8 @@ Created on Mon Dec  3 14:27:25 2018
 
 import numpy as np
 from TOD import two_obj_dominance as two_obj_dominance
+from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
+from NSGAII_functions import fast_non_dominated_sorting_first_front as fast_non_dominated_sorting_first_front
 
 split_size=split_data['split_size']
 nPop=DE_par['nPop']
@@ -16,7 +18,8 @@ index=0
 index_spl=0
 while index<NSeed:
     
-
+    Fr=np.empty(0)
+    Fr=np.reshape(Fr,[0,1])
     split_start=index%split_size+index//split_size*split_size
     split_end=split_start+split_size
     if split_end>NSeed:
@@ -27,81 +30,32 @@ while index<NSeed:
     P['CF_0']=np.loadtxt(fileName)
     fileName=folders['CF_1']+'\CF_1_'+str(index_spl).zfill(formats['fill_fn_split'])+'.out'
     P['CF_1']=np.loadtxt(fileName)
-    
-    Dom=np.zeros((split_end-split_start,nPop),dtype=int)
-    for cmb in range(split_end-split_start):
-        fileName=folders['Scaling_factors']+'\SF_'+str(index+cmb).zfill(formats['fill_fn_all'])+'.out'
-        np.savetxt(fileName, w,formats['fmt_sf'])
-#        p=0
-#        while p<nPop-1:
-#            if Dom[cmb,p]==1:
-#                p=p+1
-#                continue
-#            q=p+1
-#            while q<nPop:
-#                if Dom[cmb,q]==1:
-#                    q=q+1
-#                    continue
-#                case=two_obj_dominance(P['CF_0'][cmb,p],P['CF_1'][cmb,p],P['CF_0'][cmb,q],P['CF_1'][cmb,q],cond)
-#                if case==0:
-#                    Dom[cmb,q]=1
-#                elif case==1 and Dom[cmb,p]==0:
-#                    Dom[cmb,p]=1
-#                q=q+1
-#            p=p+1
+    P_CF_0=P['CF_0'].flatten()
+    P_CF_1=P['CF_1'].flatten()
+    foo=fast_non_dominated_sorting_first_front(P_CF_0,P_CF_1,len(P_CF_0),nPop)
+    foo[:,0]=foo[:,0]+split_start
+    Fr=np.vstack((Fr,np.reshape(foo[:,0],[len(foo),1])))
+    index_spl=index_spl+1
+    index=split_end
 
 
-
-Dom=np.zeros((split_end-split_start,nPop),dtype=int)
-p_idx=0
-while p_idx<Dom.size-1:
-    p=p_idx%nPop
-    cmb_p=p_idx//nPop
-    if Dom[cmb_p,p]==1:
-        p_idx=p_idx+1
-        continue
-    q_idx=p_idx+1
-    q=q_idx%nPop
-    cmb_q=q_idx//nPop
-    while q_idx<Dom.size:
-        if Dom[cmb_q,q]==1:
-            q_idx=q_idx+1
-            continue
-        case=two_obj_dominance(P['CF_0'][cmb_p,p],P['CF_1'][cmb_p,p],P['CF_0'][cmb_q,q],P['CF_1'][cmb_q,q],cond)
-        if case==0:
-            Dom[cmb_q,q]=1
-        elif case==1 and Dom[cmb_p,p]==0:
-            Dom[cmb_p,p]=1
-        q_idx=q_idx+1
-        q=q_idx%nPop
-        cmb_q=q_idx//nPop
-    p_idx=p_idx+1
-    if p_idx%1000==0:
-        print(p_idx)
+leng=len(P_CF_0)
 
 
-Front_CF_0=P['CF_0'][np.where(Dom==0)]
-Front_CF_1=P['CF_1'][np.where(Dom==0)]
-Front=np.column_stack((Front_CF_0,Front_CF_1))
+foo=Fr_buffer[:,0]
 
+foo2=np.reshape(foo,[40,1])
+fooo=np.reshape(Fr,[0,1])
+len(foo)
+Fr=np.vstack((fooo,foo2))
 
-arr=np.row_stack((foo_r,foo_c))
+foo=F
 
+Cost_1=P_CF_0
+Cost_2=P_CF_1
+nPop=len(P_CF_0)
 
-
-foo2=tuple(map(tuple, arr))
-
-foo=Fr[0]
-foo_r=Fr[0]//nPop
-foo_c=Fr[0]%nPop
-foo2=tuple([foo_r.astype(int),foo_c.astype(int)])
-
-Front_CF_0=P['CF_0'][foo2]
-Front_CF_1=P['CF_1'][foo2]
-Front=np.column_stack((Front_CF_0,Front_CF_1))
-
-
-
+Fr_buffer=F
 
 P_CF_0=np.zeros((62,nPop),dtype=int)
 P_CF_0=P['CF_0'].flatten()

@@ -11,7 +11,6 @@ import scipy.io
 import itertools
 import math
 import sys
-import Cost_functions 
 from tqdm import tqdm
 
 
@@ -224,6 +223,7 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,
                 Sample_suite=np.append(Combs[ii],Sample_add).astype(int)
                 Sa_suite=Sa[Sample_suite,:]
                 sf_ind_suite=sf_ind[Sample_suite]
+                sf_ind_suite.shape=(len(sf_ind_suite),1)
                 case_01=len(np.unique(Rec_db_metadata['EQID'][Sample_suite]))>len(Sample_suite)-selectionParams['sameEvent']   # same event records constraint
                 case_02=len(np.unique(Rec_db_metadata['EQidx'][Sample_suite]))==len(Sample_suite)   # components allowed constraint
                 if not case_02:
@@ -232,13 +232,16 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,
                 if case_01 and case_02:
                     Sample_Sa=Sa[Sample_suite]
                     Sample_Sa_ave=np.mat(np.transpose(np.mean(Sample_Sa,axis=0)))
-                    Sample_sf=np.sum(Sa_Tgt-Sample_Sa_ave)/np.size(Sample_Sa_ave,1)
+#                    Sample_sf=np.sum(Sa_Tgt-Sample_Sa_ave)/np.size(Sample_Sa_ave,1)
                     if selectionParams['w_CF'][1]==0:
-                        Sample_Cost[kk]=Cost_functions.CF_0(Sample_Sa_ave,Sa_Tgt,Sample_sf)
+#                        Sample_Cost[kk]=(np.sum((Sample_Sa_ave+np.sum(sf_ind_suite)/len(sf_ind_suite)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
+                        Sample_Cost[kk]=(np.sum(np.power(Sample_Sa_ave+np.sum(sf_ind_suite)/len(sf_ind_suite)-Sa_Tgt,2))/np.size(Sa_Tgt,1))**0.5
+#                        u_c_01=(np.sum((Sa_unsc_ave_suite+np.sum(u)/len(u)-Sa_Tgt)**2)/np.size(Sa_Tgt,1))**0.5
                     elif selectionParams['w_CF'][0]==0:
-                        Sample_Cost[kk]=Cost_functions.CF_1(Sa_suite,sf_ind_suite,Sample_Sa_ave)
+#                        Sample_Cost[kk]=(np.sum((Sa_suite+sf_ind_suite-(Sample_Sa_ave+np.sum(sf_ind_suite)/len(sf_ind_suite)))**2/(len(sf_ind_suite)-1))/len(sf_ind_suite))**0.5
+                        Sample_Cost[kk]=(np.sum(np.power(Sa_suite+sf_ind_suite-(Sample_Sa_ave+np.sum(sf_ind_suite)/len(sf_ind_suite)),2)/(len(sf_ind_suite)-1))/len(sf_ind_suite))**0.5
                     else:
-                        Sample_Cost[kk]=((selectionParams['w_CF'][0]*Cost_functions.CF_0(Sample_Sa_ave,Sa_Tgt,Sample_sf))**2+(selectionParams['w_CF'][1]*Cost_functions.CF_1(Sa_suite,sf_ind_suite,Sample_Sa_ave))**2)**0.5
+                        Sample_Cost[kk]=((np.sum(np.power(Sample_Sa_ave+np.sum(sf_ind_suite)/len(sf_ind_suite)-Sa_Tgt,2))/np.size(Sa_Tgt,1))+(np.sum(np.power(Sa_suite+sf_ind_suite-(Sample_Sa_ave+np.sum(sf_ind_suite)/len(sf_ind_suite)),2)/(len(sf_ind_suite)-1))/len(sf_ind_suite)))**0.5
             Sample_sel_idx[ii,jj]=Sample_Cost.argmin(0)
             
     Combs=np.concatenate((Combs,Sample_sel_idx),axis=1)
@@ -250,3 +253,4 @@ def Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,
     print('\n')
     
     return Combs, Sa_unsc_ave, NSeed,split_data
+

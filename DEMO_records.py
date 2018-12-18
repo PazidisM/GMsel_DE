@@ -12,7 +12,8 @@ import Database_functions
 import Split_functions
 import folder_fmt_functions
 import DE_functions
-import DE_functions_cython_test
+#import DE_functions_cython_test
+from CMB import Combinations as Combinations
 
 #start_time=time()
 
@@ -36,7 +37,7 @@ Sa=Sa[:,Periods['idx_T_match'][0]]
 Sa,Rec_db_metadata,sf_ind, selectionParams, Ndatabase=Database_functions.Ind_sc_factor(Sa,Rec_db_metadata,Sa_Tgt,selectionParams)
 
 ## Calculate combinations / Create GM suites
-Combs, Sa_unsc_ave, NSeed, split_data=Database_functions.Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,sf_ind)
+Combs, Sa_unsc_ave, NSeed, split_data=Combinations(selectionParams,Rec_db_metadata,Ndatabase,Sa_Tgt,Sa,split_data,sf_ind)
 
 ## Printing formats
 formats=folder_fmt_functions.fmt(SaveFolder,split_data,NSeed,Rec_db_metadata,DE_par)

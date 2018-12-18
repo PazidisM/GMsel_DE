@@ -15,8 +15,8 @@ import random
 from NSGAII_functions import fast_non_dominated_sorting as fast_non_dominated_sorting
 from CDA import crowding_distance_assignment as crowding_distance_assignment
 from TOD import two_obj_dominance as two_obj_dominance
-from Cost_functions import CF_0
-from Cost_functions import CF_1
+#from Cost_functions import CF_0
+#from Cost_functions import CF_1
 
 def Initialization(selectionParams,DE_par,NSeed,folders,formats,split_data,Sa_Tgt,Sa):
     
