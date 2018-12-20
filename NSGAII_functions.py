@@ -122,8 +122,9 @@ def fast_non_dominated_sorting(Cost_1,Cost_2,nPop):
 
 
 @numba.jit(nopython=True)
-def fast_non_dominated_sorting_first_front(Cost_1,Cost_2,leng,nPop):
+def fast_non_dominated_sorting_first_front(Cost_1,Cost_2,nPop):
     
+    leng=len(Cost_1)
     Dom=np.zeros(leng)
     p=0
     while p < leng-1:
@@ -180,7 +181,7 @@ def fast_non_dominated_sorting_first_front(Cost_1,Cost_2,leng,nPop):
     F=Fr
     return F
 
-foo=fast_non_dominated_sorting_first_front(P_CF_0,P_CF_1,len(P_CF_0),nPop)
+#foo=fast_non_dominated_sorting_first_front(P_CF_0,P_CF_1,len(P_CF_0),nPop)
 
 
 

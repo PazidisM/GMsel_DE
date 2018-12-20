@@ -32,7 +32,7 @@ while index<NSeed:
     P['CF_1']=np.loadtxt(fileName)
     P_CF_0=P['CF_0'].flatten()
     P_CF_1=P['CF_1'].flatten()
-    foo=fast_non_dominated_sorting_first_front(P_CF_0,P_CF_1,len(P_CF_0),nPop)
+    foo=fast_non_dominated_sorting_first_front(P_CF_0,P_CF_1,nPop)
     foo[:,0]=foo[:,0]+split_start
     Fr=np.vstack((Fr,np.reshape(foo[:,0],[len(foo),1])))
     index_spl=index_spl+1
